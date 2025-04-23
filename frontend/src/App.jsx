@@ -6,7 +6,6 @@ import ExhibitionDetailsPage from "./pages/ExhibitionDetailsPage";
 import NavigationPage from "./pages/NavigationPage";
 import MuseumInfoPage from "./pages/MuseumInfoPage";
 import FavoritesPage from "./pages/FavoritesPage";
-import SignUp from "./pages/SignUp"; // Import the SignUp component
 
 
 
@@ -14,14 +13,10 @@ export default function App() {
   return (
     <Router>
       <div dir="rtl" style={{ fontFamily: 'Arial, sans-serif', padding: '1rem' }}>
-        <nav style={{ marginBottom: '1rem' }}>
-          <Link to="/">דף הבית</Link> | 
-          <Link to="/exhibitions">תערוכות</Link> | 
-          <Link to="/navigate">ניווט</Link> | 
-          <Link to="/info">על המוזיאון</Link> | 
-          <Link to="/favorites">שמורים</Link> | 
-          <Link to="/signup">הרשמה</Link> {/* Link to SignUp page */}
-        </nav>
+      <nav style={{ marginBottom: '1rem' }}>
+      <Link to="/">דף הבית</Link> | <Link to="/exhibitions">תערוכות</Link> | <Link to="/navigate">ניווט</Link> | <Link to="/info">על המוזיאון</Link> | <Link to="/favorites">שמורים</Link>
+      </nav>
+        
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/exhibitions" element={<ExhibitionsPage />} />
@@ -29,7 +24,6 @@ export default function App() {
           <Route path="/navigate" element={<NavigationPage />} />
           <Route path="/info" element={<MuseumInfoPage />} />
           <Route path="/favorites" element={<FavoritesPage />} />
-          <Route path="/signup" element={<SignUp />} /> {/* Add SignUp route */}
         </Routes>
       </div>
     </Router>

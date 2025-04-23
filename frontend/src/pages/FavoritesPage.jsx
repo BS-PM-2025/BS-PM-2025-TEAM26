@@ -36,13 +36,7 @@ export default function FavoritesPage() {
         ))}
       </ul>
 
-      {/* Add the Sign Up button */}
-      <div style={{ marginTop: '2rem' }}>
-        <h3>צור חשבון חדש</h3> {/* "Create a new account" */}
-        <Link to="/signup">
-          <button>Sign Up</button>
-        </Link>
-      </div>
+      
     </div>
   );
 }
