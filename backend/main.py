@@ -69,7 +69,7 @@ class UserCreate(BaseModel):
     username: str
     email: str
     password: str
-    role: str 
+    role: Optional[str] = "visitor"
 # דאטה זמני
 exhibitions = [
   {
@@ -250,7 +250,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         email=user.email,
         password=user.password,
-        role=user.role  # 👈 אל תשכח להוסיף את זה
+        role=user.role or "visitor" 
     )
     db.add(db_user)
     db.commit()
