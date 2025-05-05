@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import ExhibitionsPage from "./pages/ExhibitionsPage";
 import ExhibitionDetailsPage from "./pages/ExhibitionDetailsPage";
@@ -7,9 +7,10 @@ import NavigationPage from "./pages/NavigationPage";
 import MuseumInfoPage from "./pages/MuseumInfoPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import EventsPage from "./pages/EventsPage";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage"; 
-
 
 
 export default function App() {
@@ -35,5 +36,5 @@ export default function App() {
         <Footer /> {/* תחתית קבועה */}
       </div>
     </Router>
-  );
+  );
 }
