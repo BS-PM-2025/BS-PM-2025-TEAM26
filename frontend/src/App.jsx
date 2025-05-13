@@ -11,6 +11,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage"; 
+import GuideDashboard from "./pages/GuideDashboard";
 
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/events" element={<EventsPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} /> 
+            <Route path="/guide-dashboard" element={<GuideDashboard />} />
           </Routes>
         </div>
 
