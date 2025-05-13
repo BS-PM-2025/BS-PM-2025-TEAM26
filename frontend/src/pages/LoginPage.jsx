@@ -30,13 +30,17 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
-      alert(`ברוך הבא ${data.username}!`);
+      alert('ברוך הבא ${data.username}!');
 
-      // שמירה ב-localStorage שהמשתמש מחובר
+      // שמירה ב-localStorage
       localStorage.setItem('loggedInUser', JSON.stringify(data));
 
-      // מעבר לעמוד הבית
-      navigate('/');
+      // ניווט לפי תפקיד
+      if (data.role === "guide") {
+        navigate("/guide");
+      } else {
+        navigate("/");
+      }
 
     } catch (error) {
       console.error('שגיאת התחברות:', error);

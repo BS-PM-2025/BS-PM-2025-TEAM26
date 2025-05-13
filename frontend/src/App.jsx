@@ -12,6 +12,7 @@ import Footer from "./components/Footer";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage"; 
 import GuideDashboard from "./pages/GuideDashboard";
+import GuidePage from "./pages/GuidePage";
 
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} /> 
             <Route path="/guide-dashboard" element={<GuideDashboard />} />
+            <Route path="/guide" element={<GuidePage />} />
           </Routes>
         </div>
 

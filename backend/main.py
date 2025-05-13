@@ -28,7 +28,7 @@ Base = declarative_base()
 # טבלאות במסד נתונים
 
 class User(Base):
-    _tablename_ = "users"
+    tablename = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
@@ -259,9 +259,14 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
 
 # --- login תקין כך: ---
+
 @app.post("/login")
 def login_user(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email, User.password == user.password).first()
     if not db_user:
         raise HTTPException(status_code=400, detail="אימייל או סיסמה שגויים")
-    return {"username": db_user.username}
+    
+    return {
+        "username": db_user.username,
+        "role": db_user.role
+    }
