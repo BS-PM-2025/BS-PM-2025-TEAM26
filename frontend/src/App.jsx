@@ -13,7 +13,7 @@ import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage"; 
 import GuideDashboard from "./pages/GuideDashboard";
 import GuidePage from "./pages/GuidePage";
-
+import CreateTourPage from "./pages/guide/CreateTourPage";
 
 export default function App() {
   return (
@@ -34,6 +34,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} /> 
             <Route path="/guide-dashboard" element={<GuideDashboard />} />
             <Route path="/guide" element={<GuidePage />} />
+            <Route path="/guide/create-tour" element={<CreateTourPage />} />
           </Routes>
         </div>
 
