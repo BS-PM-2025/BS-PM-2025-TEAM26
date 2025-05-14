@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -28,7 +28,7 @@ Base = declarative_base()
 # טבלאות במסד נתונים
 
 class User(Base):
-    __tablename__ = "users"
+    _tablename_ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
@@ -69,7 +69,14 @@ class UserCreate(BaseModel):
     username: str
     email: str
     password: str
-    role: Optional[str] = "visitor"
+    role: Optional[str] = "visitor" 
+
+
+class Tour(BaseModel):
+    name: str
+    exhibitions: List[int]
+
+tours = []
 # דאטה זמני
 exhibitions = [
   {
@@ -239,7 +246,6 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
-# --- משנים את register כך: ---
 @app.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user.email).first()
@@ -250,7 +256,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         email=user.email,
         password=user.password,
-        role=user.role or "visitor" 
+         role=user.role or "visitor"
     )
     db.add(db_user)
     db.commit()
@@ -258,7 +264,6 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     return {"message": "נרשמת בהצלחה!", "role": db_user.role}
 
 
-# --- login תקין כך: ---
 
 @app.post("/login")
 def login_user(user: UserLogin, db: Session = Depends(get_db)):
@@ -270,3 +275,7 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
         "username": db_user.username,
         "role": db_user.role
     }
+@app.post("/guide/create-tour")
+def create_tour(tour: Tour):
+    tours.append(tour)
+    return {"message": f"הסיור '{tour.name}' נוצר עם {len(tour.exhibitions)} תערוכות."}
