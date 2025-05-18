@@ -22,7 +22,7 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)

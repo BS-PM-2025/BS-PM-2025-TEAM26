@@ -7,49 +7,47 @@ export default function GuideDashboardPage() {
       <h2>ברוך הבא, מדריך!</h2>
       <p>כאן תוכל לנהל את הסיורים שלך ולבצע פעולות ייחודיות.</p>
 
-      <div style={{ marginTop: "2rem", display: "flex", justifyContent: "center", gap: "1.5rem", flexWrap: "wrap" }}>
+      <div
+        style={{
+          marginTop: "2rem",
+          display: "flex",
+          justifyContent: "center",
+          gap: "1.5rem",
+          flexWrap: "wrap"
+        }}
+      >
         <Link
           to="/guide/create-tour"
-          style={{
-            padding: "1rem 2rem",
-            backgroundColor: "#0077b6",
-            color: "white",
-            borderRadius: "6px",
-            textDecoration: "none",
-            fontSize: "1.1rem"
-          }}
+          style={buttonStyle("#0077b6")}
         >
-          צור סיור מותאם אישית
+          ➕ צור סיור מותאם אישית
         </Link>
 
         <Link
           to="/guide/audio-upload"
-          style={{
-            padding: "1rem 2rem",
-            backgroundColor: "#00b386",
-            color: "white",
-            borderRadius: "6px",
-            textDecoration: "none",
-            fontSize: "1.1rem"
-          }}
+          style={buttonStyle("#00b386")}
         >
-          הוסף הסבר קולי לתערוכה
+          🎧 הוסף הסבר קולי לתערוכה
         </Link>
 
         <Link
           to="/guide/tour-list"
-          style={{
-            padding: "1rem 2rem",
-            backgroundColor: "#ff8800",
-            color: "white",
-            borderRadius: "6px",
-            textDecoration: "none",
-            fontSize: "1.1rem"
-          }}
+          style={buttonStyle("#ff8800")}
         >
-          צפייה בסיורים קיימים
+          📋 צפייה בסיורים קיימים
         </Link>
       </div>
     </div>
   );
 }
+
+const buttonStyle = (bgColor) => ({
+  padding: "1rem 2rem",
+  backgroundColor: bgColor,
+  color: "white",
+  borderRadius: "6px",
+  textDecoration: "none",
+  fontSize: "1.1rem",
+  minWidth: "220px",
+  display: "inline-block"
+});
