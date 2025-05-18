@@ -48,6 +48,14 @@ class Tour(Base):
     exhibition_ids = Column(String)  # מזהה תערוכות מופרדות בפסיקים
 
 
+class TourRegistration(Base):
+    __tablename__ = "tour_registrations"
+    id = Column(Integer, primary_key=True)
+    tour_id = Column(Integer, nullable=False)
+    user_id = Column(Integer, nullable=False)
+
+
+
 # יצירת טבלאות במסד אם לא קיימות
 Base.metadata.create_all(bind=engine)
 
@@ -88,6 +96,11 @@ class UserCreate(BaseModel):
 class Tour(BaseModel):
     name: str
     exhibitions: List[int]
+
+
+class TourSignup(BaseModel):
+    tour_id: int
+    user_id: int
 
 tours = []
 # דאטה זמני
@@ -292,3 +305,48 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
 def create_tour(tour: Tour):
     tours.append(tour)
     return {"message": f"הסיור '{tour.name}' נוצר עם {len(tour.exhibitions)} תערוכות."}
+
+@app.post("/tours/{tour_id}/register")
+def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == visitor_email).first()
+    if not user or user.role != "visitor":
+        raise HTTPException(status_code=400, detail="משתמש לא קיים או לא מבקר")
+
+    registration = TourRegistration(tour_id=tour_id, visitor_id=user.id)
+    db.add(registration)
+    db.commit()
+    return {"message": f"המבקר {user.username} נרשם לסיור {tour_id}"}
+  
+@app.get("/guide/tours/{tour_id}/registrations")
+def get_tour_registrations(tour_id: int, db: Session = Depends(get_db)):
+    regs = db.query(TourRegistration).filter(TourRegistration.tour_id == tour_id).all()
+    if not regs:
+        return []
+
+    results = []
+    for reg in regs:
+        visitor = db.query(User).filter(User.id == reg.visitor_id).first()
+        if visitor:
+            results.append({"username": visitor.username, "email": visitor.email})
+    return results
+
+
+@app.post("/tours/signup")
+def signup_for_tour(signup: TourSignup, db: Session = Depends(get_db)):
+    # בדיקה אם כבר נרשם
+    existing = db.query(TourRegistration).filter_by(tour_id=signup.tour_id, user_id=signup.user_id).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="המשתמש כבר נרשם לסיור זה")
+
+    registration = TourRegistration(tour_id=signup.tour_id, user_id=signup.user_id)
+    db.add(registration)
+    db.commit()
+    return {"message": "נרשמת בהצלחה לסיור!"}
+
+@app.get("/tours/{tour_id}/participants")
+def get_tour_participants(tour_id: int, db: Session = Depends(get_db)):
+    registrations = db.query(TourRegistration).filter_by(tour_id=tour_id).all()
+    user_ids = [reg.user_id for reg in registrations]
+    users = db.query(User).filter(User.id.in_(user_ids)).all()
+    return [{"id": u.id, "username": u.username, "email": u.email} for u in users]
+

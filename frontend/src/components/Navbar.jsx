@@ -35,24 +35,24 @@ export default function Navbar() {
         padding: 0,
         alignItems: "center"
       }}>
-        {/* קישורים לכל המשתמשים */}
         <li><Link to="/" style={{ color: "white", textDecoration: "none" }}>בית</Link></li>
         <li><Link to="/exhibitions" style={{ color: "white", textDecoration: "none" }}>תערוכות</Link></li>
-        <li><Link to="/navigate" style={{ color: "white", textDecoration: "none" }}>ניווט</Link></li> 
+        <li><Link to="/navigate" style={{ color: "white", textDecoration: "none" }}>ניווט</Link></li>
         <li><Link to="/events" style={{ color: "white", textDecoration: "none" }}>אירועים</Link></li>
-        <li><Link to="/info" style={{ color: "white", textDecoration: "none" }}>על המוזיאון</Link></li>  
+        <li><Link to="/info" style={{ color: "white", textDecoration: "none" }}>על המוזיאון</Link></li>
 
-        {/* קישורים ספציפיים למבקר */}
+        {/* למבקר */}
         {role === "visitor" && (
-          <li><Link to="/favorites" style={{ color: "white", textDecoration: "none" }}>שמורים</Link></li>
+          <>
+            <li><Link to="/favorites" style={{ color: "white", textDecoration: "none" }}>שמורים</Link></li>
+            <li><Link to="/visitor/tours" style={{ color: "white", textDecoration: "none" }}>סיורים</Link></li>
+          </>
         )}
 
-        {/* קישור ללוח הבקרה של המדריך */}
+        {/* למדריך */}
         {role === "guide" && (
           <li><Link to="/guide-dashboard" style={{ color: "white", textDecoration: "none" }}>לוח מדריך</Link></li>
         )}
-
-        {/* מנהל - ניתן להוסיף בעתיד */}
 
         {!loggedInUser ? (
           <>
