@@ -93,9 +93,10 @@ class UserCreate(BaseModel):
     role: Optional[str] = "visitor" 
 
 
-class Tour(BaseModel):
+class TourCreate(BaseModel):
     name: str
     exhibitions: List[int]
+
 
 
 class TourSignup(BaseModel):
@@ -302,9 +303,17 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
         "role": db_user.role
     }
 @app.post("/guide/create-tour")
-def create_tour(tour: Tour):
-    tours.append(tour)
-    return {"message": f"הסיור '{tour.name}' נוצר עם {len(tour.exhibitions)} תערוכות."}
+def create_tour(tour: TourCreate, db: Session = Depends(get_db)):
+    new_tour = Tour(
+        name=tour.name,
+        guide_id=1,  # זמנית — צריך לשלוף לפי המשתמש המחובר
+        description="סיור שנוצר ע״י מדריך",
+        exhibition_ids=",".join(map(str, tour.exhibitions))
+    )
+    db.add(new_tour)
+    db.commit()
+    db.refresh(new_tour)
+    return {"message": f"הסיור '{tour.name}' נוצר בהצלחה!"}
 
 @app.post("/tours/{tour_id}/register")
 def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get_db)):
