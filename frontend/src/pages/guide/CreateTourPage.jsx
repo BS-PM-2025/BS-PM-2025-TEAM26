@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 export default function CreateTourPage() {
   const [exhibitions, setExhibitions] = useState([]);
   const [selectedExhibitions, setSelectedExhibitions] = useState([]);
+  const [activeExhibition, setActiveExhibition] = useState(null); // לתצוגת פרטים
 
   useEffect(() => {
     fetch("http://localhost:8000/exhibitions")
@@ -24,6 +25,10 @@ export default function CreateTourPage() {
     setSelectedExhibitions(selectedExhibitions.filter((ex) => ex.id !== id));
   };
 
+  const handleShowDetails = (exhibition) => {
+    setActiveExhibition(exhibition);
+  };
+
   return (
     <div style={{ padding: "2rem" }}>
       <h2>צור סיור מותאם אישית</h2>
@@ -32,10 +37,16 @@ export default function CreateTourPage() {
       {exhibitions.length === 0 ? (
         <p>טוען תערוכות...</p>
       ) : (
-        <ul>
+        <ul style={{ listStyle: "none", padding: 0 }}>
           {exhibitions.map((ex) => (
-            <li key={ex.id} style={{ marginBottom: "1rem" }}>
-              <strong>{ex.title}</strong> - {ex.location}
+            <li key={ex.id} style={{ marginBottom: "1rem", borderBottom: "1px solid #ccc", paddingBottom: "1rem" }}>
+              <span
+                onClick={() => handleShowDetails(ex)}
+                style={{ cursor: "pointer", color: "#0077b6", fontWeight: "bold", textDecoration: "underline" }}
+              >
+                {ex.title}
+              </span>{" "}
+              - {ex.location}
               <button
                 onClick={() => handleAddToTour(ex)}
                 style={{
@@ -83,6 +94,26 @@ export default function CreateTourPage() {
             </li>
           ))}
         </ul>
+      )}
+
+      {/* תצוגת פרטים נוספים */}
+      {activeExhibition && (
+        <div style={{ marginTop: "3rem", padding: "1.5rem", border: "1px solid #ccc", borderRadius: "8px", backgroundColor: "#f9f9f9" }}>
+          <h3>{activeExhibition.title}</h3>
+          <p><strong>תיאור:</strong> {activeExhibition.description}</p>
+          <p><strong>מיקום:</strong> {activeExhibition.location}</p>
+          {activeExhibition.curator && <p><strong>אוצר:</strong> {activeExhibition.curator}</p>}
+          {activeExhibition.date_start && (
+            <p>
+              <strong>תאריכים:</strong> {activeExhibition.date_start} - {activeExhibition.date_end || "—"}
+            </p>
+          )}
+          <img
+            src={activeExhibition.image}
+            alt={activeExhibition.title}
+            style={{ maxWidth: "100%", marginTop: "1rem", borderRadius: "8px" }}
+          />
+        </div>
       )}
     </div>
   );

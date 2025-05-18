@@ -4,7 +4,10 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from sqlalchemy.orm import declarative_base
 
+
+Base = declarative_base()
 
 # יצירת אפליקציה
 app = FastAPI()
@@ -23,10 +26,10 @@ DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
-Base = declarative_base()
+
 
 # טבלאות במסד נתונים
-
+Base = declarative_base()
 class User(Base):
     _tablename_ = "users"
     id = Column(Integer, primary_key=True, index=True)
@@ -34,6 +37,16 @@ class User(Base):
     email = Column(String(150), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     role = Column(String(20), nullable=False, default="visitor")
+
+
+class Tour(Base):
+    __tablename__ = "tours"
+    id = Column(Integer, primary_key=True)
+    guide_id = Column(Integer, nullable=False)
+    name = Column(String, nullable=False)
+    description = Column(String)
+    exhibition_ids = Column(String)  # מזהה תערוכות מופרדות בפסיקים
+
 
 # יצירת טבלאות במסד אם לא קיימות
 Base.metadata.create_all(bind=engine)
