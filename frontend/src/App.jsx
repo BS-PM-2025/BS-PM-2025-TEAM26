@@ -15,6 +15,9 @@ import GuideDashboard from "./pages/GuideDashboard";
 import GuidePage from "./pages/GuidePage";
 import CreateTourPage from "./pages/guide/CreateTourPage";
 import VisitorToursPage from "./pages/VisitorToursPage";
+import TourParticipantsPage from "./pages/guide/TourParticipantsPage1";
+
+
 
 
 export default function App() {
@@ -38,6 +41,9 @@ export default function App() {
             <Route path="/guide" element={<GuidePage />} />
             <Route path="/guide/create-tour" element={<CreateTourPage />} />
             <Route path="/visitor/tours" element={<VisitorToursPage />} />
+            <Route path="/guide/tours/:tourId/participants" element={<TourParticipantsPage />} />
+
+            
           </Routes>
         </div>
 
@@ -46,3 +52,4 @@ export default function App() {
     </Router>
   );
 }
+

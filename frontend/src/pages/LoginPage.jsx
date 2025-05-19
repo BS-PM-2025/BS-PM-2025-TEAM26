@@ -30,7 +30,7 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
-      alert('ברוך הבא ${data.username}!');
+      alert(`ברוך הבא ${data.username}!`);
 
       // שמירה ב-localStorage
       localStorage.setItem('loggedInUser', JSON.stringify(data));

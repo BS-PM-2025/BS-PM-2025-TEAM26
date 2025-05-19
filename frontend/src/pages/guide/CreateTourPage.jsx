@@ -3,18 +3,24 @@ import React, { useEffect, useState } from "react";
 export default function CreateTourPage() {
   const [exhibitions, setExhibitions] = useState([]);
   const [selectedExhibitions, setSelectedExhibitions] = useState([]);
-  const [activeExhibition, setActiveExhibition] = useState(null); // לתצוגת פרטים
+  const [activeExhibition, setActiveExhibition] = useState(null);
 
   useEffect(() => {
     fetch("http://localhost:8000/exhibitions")
       .then((res) => res.json())
-      .then((data) => setExhibitions(data))
+      .then((data) => {
+        // ודא שמה שאתה מקבל זה מערך
+        if (Array.isArray(data)) {
+          setExhibitions(data);
+        } else {
+          console.error("קיבלתי פורמט לא צפוי", data);
+        }
+      })
       .catch((err) => {
         console.error("שגיאה בטעינת תערוכות:", err);
-        alert("לא ניתן לטעון תערוכות כרגע.");
       });
   }, []);
-
+  
   const handleAddToTour = (exhibition) => {
     if (!selectedExhibitions.find((ex) => ex.id === exhibition.id)) {
       setSelectedExhibitions([...selectedExhibitions, exhibition]);
@@ -27,6 +33,31 @@ export default function CreateTourPage() {
 
   const handleShowDetails = (exhibition) => {
     setActiveExhibition(exhibition);
+  };
+
+  const handleSaveTour = async () => {
+    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    if (!loggedInUser) return alert("יש להתחבר לפני שמירת הסיור");
+
+    const tourData = {
+      guide_id: loggedInUser.id,
+      name: prompt("הזן שם לסיור:"),
+      description: prompt("תיאור הסיור (לא חובה):"),
+      exhibitions: selectedExhibitions.map((ex) => ex.id)
+    };
+    
+    try {
+      const res = await fetch("http://localhost:8000/tours", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tourData)
+      });
+      const data = await res.json();
+      alert(data.message);
+    } catch (err) {
+      alert("שגיאה בשמירת הסיור");
+      console.error(err);
+    }
   };
 
   return (
@@ -96,7 +127,24 @@ export default function CreateTourPage() {
         </ul>
       )}
 
-      {/* תצוגת פרטים נוספים */}
+      {selectedExhibitions.length > 0 && (
+        <button
+          onClick={handleSaveTour}
+          style={{
+            marginTop: "2rem",
+            padding: "0.75rem 2rem",
+            backgroundColor: "#0077b6",
+            color: "white",
+            fontSize: "1rem",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer"
+          }}
+        >
+          שמור סיור
+        </button>
+      )}
+
       {activeExhibition && (
         <div style={{ marginTop: "3rem", padding: "1.5rem", border: "1px solid #ccc", borderRadius: "8px", backgroundColor: "#f9f9f9" }}>
           <h3>{activeExhibition.title}</h3>

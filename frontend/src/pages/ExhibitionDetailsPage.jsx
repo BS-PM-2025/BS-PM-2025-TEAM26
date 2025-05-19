@@ -25,15 +25,45 @@ export default function ExhibitionDetailsPage() {
     }
   };
 
+  const formatDateRange = (start, end) => {
+    if (!start) return "";
+    const startDate = new Date(start);
+    const startStr = startDate.toLocaleDateString('he-IL', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+    if (!end) {
+      return startStr;
+    }
+    const endDate = new Date(end);
+    const endStr = endDate.toLocaleDateString('he-IL', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+    return `${startStr} - ${endStr}`;
+  };
+
   if (!exhibition) return <p>טוען מידע...</p>;
   if (exhibition.error) return <p>התערוכה לא נמצאה.</p>;
 
   return (
-    <div>
+    <div style={{ textAlign: 'center', padding: '2rem' }}>
       <h2>{exhibition.title}</h2>
       <img src={exhibition.image} alt={exhibition.title} width="300" />
       <p>{exhibition.description}</p>
-      <button onClick={handleSave} style={{ marginTop: '1rem' }}>שמור תערוכה</button>
+      {(exhibition.date_start || exhibition.date_end) && (
+        <p><strong>תאריכים:</strong> {formatDateRange(exhibition.date_start, exhibition.date_end)}</p>
+      )}
+      {exhibition.location && <p><strong>מיקום:</strong> {exhibition.location}</p>}
+      {exhibition.curator && <p><strong>אוצרת:</strong> {exhibition.curator}</p>}
+      {exhibition.assistant_curator && <p><strong>עוזר/ת אוצר:</strong> {exhibition.assistant_curator}</p>}
+      {exhibition.designer && <p><strong>מעצבת:</strong> {exhibition.designer}</p>}
+
+      <button onClick={handleSave} style={{ marginTop: '1rem', padding: '0.5rem 1rem', backgroundColor: '#0077b6', color: 'white', border: 'none', borderRadius: '6px' }}>
+        שמור תערוכה
+      </button>
     </div>
   );
 }

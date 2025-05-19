@@ -75,7 +75,8 @@ class TourCreate(BaseModel):
     guide_id: int
     name: str
     description: Optional[str]
-    exhibitions: List[int]
+    exhibitions: Optional[List[int]] = []
+
 
 class TourSignup(BaseModel):
     tour_id: int
@@ -275,16 +276,18 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
 
 @app.post("/tours")
 def create_tour(tour: TourCreate, db: Session = Depends(get_db)):
+    exhibition_ids = ",".join(map(str, tour.exhibitions or []))
     new_tour = Tour(
         guide_id=tour.guide_id,
         name=tour.name,
         description=tour.description,
-        exhibition_ids=",".join(map(str, tour.exhibitions))
+        exhibition_ids=exhibition_ids
     )
     db.add(new_tour)
     db.commit()
     db.refresh(new_tour)
     return {"message": f"הסיור '{tour.name}' נוצר בהצלחה!", "id": new_tour.id}
+
 
 @app.post("/tours/{tour_id}/register")
 def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get_db)):
@@ -305,3 +308,7 @@ def get_tour_participants(tour_id: int, db: Session = Depends(get_db)):
 @app.get("/info", response_model=MuseumInfo)
 def get_museum_info():
     return museum_info
+
+@app.get("/tours")
+def get_all_tours(db: Session = Depends(get_db)):
+    return db.query(Tour).all()
