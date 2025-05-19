@@ -4,8 +4,6 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
-from sqlalchemy.orm import declarative_base
-
 
 Base = declarative_base()
 
@@ -22,22 +20,19 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
-
 # טבלאות במסד נתונים
-Base = declarative_base()
 class User(Base):
-    _tablename_ = "users"
+    __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     role = Column(String(20), nullable=False, default="visitor")
-
 
 class Tour(Base):
     __tablename__ = "tours"
@@ -47,19 +42,17 @@ class Tour(Base):
     description = Column(String)
     exhibition_ids = Column(String)  # מזהה תערוכות מופרדות בפסיקים
 
-
 class TourRegistration(Base):
     __tablename__ = "tour_registrations"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
 
-
-
 # יצירת טבלאות במסד אם לא קיימות
 Base.metadata.create_all(bind=engine)
 
 # תלויות למסד
+
 def get_db():
     db = SessionLocal()
     try:
@@ -68,6 +61,25 @@ def get_db():
         db.close()
 
 # מודלים ל-API
+class UserCreate(BaseModel):
+    username: str
+    email: str
+    password: str
+    role: Optional[str] = "visitor"
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class TourCreate(BaseModel):
+    guide_id: int
+    name: str
+    description: Optional[str]
+    exhibitions: List[int]
+
+class TourSignup(BaseModel):
+    tour_id: int
+    user_id: int
 
 class Exhibition(BaseModel):
     id: int
@@ -86,24 +98,6 @@ class MuseumInfo(BaseModel):
     description: str
     services: List[str]
 
-class UserCreate(BaseModel):
-    username: str
-    email: str
-    password: str
-    role: Optional[str] = "visitor" 
-
-
-class TourCreate(BaseModel):
-    name: str
-    exhibitions: List[int]
-
-
-
-class TourSignup(BaseModel):
-    tour_id: int
-    user_id: int
-
-tours = []
 # דאטה זמני
 exhibitions = [
   {
@@ -207,20 +201,18 @@ exhibitions = [
     "image": "/images/fe-moed.jpg"
   }
 ]
-
 museum_info = MuseumInfo(
-    opening_hours="""
-א' | סגור
+    opening_hours="""א' | סגור
 ב' | 10:00–16:00
 ג' | 16:00–20:00
 ד' | סגור
 ה' | 10:00–16:00
 ו' | 10:00–14:00
-שבת | 10:00–16:00
-""",
-    description="""מוזיאון ישראל בירושלים הוא אחד מהמוזיאונים הגדולים בעולם לאמנות וארכאולוגיה.""",
-    services=["בית קפה", "מסעדה", "חנות מוזיאון", "שירותים נגישים", "מעליות", "חניה נגישה", "מדריכים קוליים"]
+שבת | 10:00–16:00""",
+    description="""מוזיאון ישראל בירושלים...""",
+    services=["בית קפה", "מסעדה", "חנות מוזיאון", "שירותים נגישים"]
 )
+
 
 events = [
     {
@@ -243,8 +235,8 @@ events = [
     }
 ]
 
-# ראוטים
 
+# ראוטים
 @app.get("/exhibitions", response_model=List[Exhibition])
 def get_exhibitions():
     return exhibitions
@@ -259,103 +251,57 @@ def get_exhibition(ex_id: int):
 @app.get("/search", response_model=List[Exhibition])
 def search_exhibitions(q: str):
     return [ex for ex in exhibitions if q.lower() in ex["title"].lower()]
-
-@app.get("/info", response_model=MuseumInfo)
-def get_museum_info():
-    return museum_info
-
 @app.get("/events")
 def get_events():
     return events
 
-# --- מוסיפים בהתחלה ---
-class UserLogin(BaseModel):
-    email: str
-    password: str
 
 @app.post("/register")
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == user.email).first()
-    if existing_user:
+    if db.query(User).filter(User.email == user.email).first():
         raise HTTPException(status_code=400, detail="האימייל כבר קיים במערכת")
-
-    db_user = User(
-        username=user.username,
-        email=user.email,
-        password=user.password,
-         role=user.role or "visitor"
-    )
-    db.add(db_user)
+    new_user = User(**user.dict())
+    db.add(new_user)
     db.commit()
-    db.refresh(db_user)
-    return {"message": "נרשמת בהצלחה!", "role": db_user.role}
-
-
+    db.refresh(new_user)
+    return {"message": "נרשמת בהצלחה!", "role": new_user.role}
 
 @app.post("/login")
 def login_user(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email, User.password == user.password).first()
-    if not db_user:
+    found = db.query(User).filter_by(email=user.email, password=user.password).first()
+    if not found:
         raise HTTPException(status_code=400, detail="אימייל או סיסמה שגויים")
-    
-    return {
-        "username": db_user.username,
-        "role": db_user.role
-    }
-@app.post("/guide/create-tour")
+    return {"username": found.username, "role": found.role}
+
+@app.post("/tours")
 def create_tour(tour: TourCreate, db: Session = Depends(get_db)):
     new_tour = Tour(
+        guide_id=tour.guide_id,
         name=tour.name,
-        guide_id=1,  # זמנית — צריך לשלוף לפי המשתמש המחובר
-        description="סיור שנוצר ע״י מדריך",
+        description=tour.description,
         exhibition_ids=",".join(map(str, tour.exhibitions))
     )
     db.add(new_tour)
     db.commit()
     db.refresh(new_tour)
-    return {"message": f"הסיור '{tour.name}' נוצר בהצלחה!"}
+    return {"message": f"הסיור '{tour.name}' נוצר בהצלחה!", "id": new_tour.id}
 
 @app.post("/tours/{tour_id}/register")
 def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == visitor_email).first()
+    user = db.query(User).filter_by(email=visitor_email).first()
     if not user or user.role != "visitor":
         raise HTTPException(status_code=400, detail="משתמש לא קיים או לא מבקר")
-
-    registration = TourRegistration(tour_id=tour_id, visitor_id=user.id)
+    registration = TourRegistration(tour_id=tour_id, user_id=user.id)
     db.add(registration)
     db.commit()
-    return {"message": f"המבקר {user.username} נרשם לסיור {tour_id}"}
-  
-@app.get("/guide/tours/{tour_id}/registrations")
-def get_tour_registrations(tour_id: int, db: Session = Depends(get_db)):
-    regs = db.query(TourRegistration).filter(TourRegistration.tour_id == tour_id).all()
-    if not regs:
-        return []
-
-    results = []
-    for reg in regs:
-        visitor = db.query(User).filter(User.id == reg.visitor_id).first()
-        if visitor:
-            results.append({"username": visitor.username, "email": visitor.email})
-    return results
-
-
-@app.post("/tours/signup")
-def signup_for_tour(signup: TourSignup, db: Session = Depends(get_db)):
-    # בדיקה אם כבר נרשם
-    existing = db.query(TourRegistration).filter_by(tour_id=signup.tour_id, user_id=signup.user_id).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="המשתמש כבר נרשם לסיור זה")
-
-    registration = TourRegistration(tour_id=signup.tour_id, user_id=signup.user_id)
-    db.add(registration)
-    db.commit()
-    return {"message": "נרשמת בהצלחה לסיור!"}
+    return {"message": f"המשתמש {user.username} נרשם לסיור {tour_id}"}
 
 @app.get("/tours/{tour_id}/participants")
 def get_tour_participants(tour_id: int, db: Session = Depends(get_db)):
-    registrations = db.query(TourRegistration).filter_by(tour_id=tour_id).all()
-    user_ids = [reg.user_id for reg in registrations]
-    users = db.query(User).filter(User.id.in_(user_ids)).all()
+    regs = db.query(TourRegistration).filter_by(tour_id=tour_id).all()
+    users = db.query(User).filter(User.id.in_([r.user_id for r in regs])).all()
     return [{"id": u.id, "username": u.username, "email": u.email} for u in users]
 
+@app.get("/info", response_model=MuseumInfo)
+def get_museum_info():
+    return museum_info

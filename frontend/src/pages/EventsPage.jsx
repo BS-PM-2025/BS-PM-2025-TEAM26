@@ -17,27 +17,7 @@ export default function EventsPage() {
     return () => clearInterval(interval);
   }, [events]);
 
-  const fetchEvents = async () => {
-    const res = await fetch("http://localhost:8000/events");
-    const data = await res.json();
-    const sorted = sortEventsByDate(data);
-    setEvents(sorted);
-    setLastCount(sorted.length);
-    filterByMonth(sorted, selectedMonth);
-  };
-
-  const checkForNewEvents = async () => {
-    const res = await fetch("http://localhost:8000/events");
-    const data = await res.json();
-    const sorted = sortEventsByDate(data);
-    if (sorted.length > lastCount) {
-      alert("🎉 נוסף אירוע חדש!");
-      setEvents(sorted);
-      setLastCount(sorted.length);
-      filterByMonth(sorted, selectedMonth);
-    }
-  };
-
+  // ✅ כאן הפונקציה נוספה
   const sortEventsByDate = (eventsArray) => {
     return eventsArray.sort((a, b) => {
       const dateA = new Date(parseDate(a.date));
@@ -47,12 +27,43 @@ export default function EventsPage() {
   };
 
   const parseDate = (dateStr) => {
-    // אם יש בעיות פורמט, מנסה לפצל
     if (dateStr.includes("-")) {
-      return dateStr; // פורמט תקני
+      return dateStr;
     }
-    // אחרת אפשר פה לשפר לפורמט אם צריך
-    return dateStr; 
+    return dateStr;
+  };
+
+  const fetchEvents = async () => {
+    const res = await fetch("http://localhost:8000/events");
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      console.error("הנתונים שהתקבלו אינם מערך:", data);
+      return;
+    }
+
+    const sorted = sortEventsByDate(data);
+    setEvents(sorted);
+    setLastCount(sorted.length);
+    filterByMonth(sorted, selectedMonth);
+  };
+
+  const checkForNewEvents = async () => {
+    const res = await fetch("http://localhost:8000/events");
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      console.error("הנתונים שהתקבלו אינם מערך:", data);
+      return;
+    }
+
+    const sorted = sortEventsByDate(data);
+    if (sorted.length > lastCount) {
+      alert("🎉 נוסף אירוע חדש!");
+      setEvents(sorted);
+      setLastCount(sorted.length);
+      filterByMonth(sorted, selectedMonth);
+    }
   };
 
   const handleMonthChange = (e) => {
@@ -103,7 +114,6 @@ export default function EventsPage() {
           <option value="12">דצמבר</option>
         </select>
 
-        {/* ספירה */}
         <p style={{ marginTop: "1rem", fontSize: "1.1rem" }}>
           {filteredEvents.length} אירועים נמצאו
         </p>
@@ -153,6 +163,3 @@ export default function EventsPage() {
     </div>
   );
 }
-
-
-
