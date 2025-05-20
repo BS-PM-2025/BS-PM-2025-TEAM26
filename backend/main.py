@@ -20,7 +20,7 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -337,7 +337,25 @@ def get_museum_info():
 
 @app.get("/tours")
 def get_all_tours(db: Session = Depends(get_db)):
-    return db.query(Tour).all()
+    tours = db.query(Tour).all()
+
+    # שלוף את כל המדריכים הרלוונטיים
+    guide_ids = [t.guide_id for t in tours]
+    guides = db.query(User).filter(User.id.in_(guide_ids)).all()
+    guide_map = {g.id: g.username for g in guides}
+
+    return [
+        {
+            "id": t.id,
+            "name": t.name,
+            "description": t.description,
+            "exhibition_ids": t.exhibition_ids,
+            "tour_date": t.tour_date,
+            "guide_id": t.guide_id,
+            "guide_name": guide_map.get(t.guide_id, "מדריך לא ידוע")  # ✅ חדש
+        }
+        for t in tours
+    ]
 
 
 @app.delete("/tours/{tour_id}")
