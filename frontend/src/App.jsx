@@ -15,7 +15,7 @@ import GuideDashboard from "./pages/GuideDashboard";
 import GuidePage from "./pages/GuidePage";
 import CreateTourPage from "./pages/guide/CreateTourPage";
 import VisitorToursPage from "./pages/VisitorToursPage";
-import TourParticipantsPage from "./pages/guide/TourParticipantsPage1";
+import TourParticipantsPage from "./pages/guide/TourParticipantsPage";
 import ManageToursPage from "./pages/guide/ManageToursPage";
 import EditTourPage from "./pages/guide/EditTourPage";
 
@@ -45,6 +45,7 @@ export default function App() {
             <Route path="/guide/tours/:tourId/participants" element={<TourParticipantsPage />} />
             <Route path="/guide/manage-tours" element={<ManageToursPage />} />
             <Route path="/guide/edit-tour/:id" element={<EditTourPage />} />
+            <Route path="/guide/tour-participants" element={<TourParticipantsPage />} />
           </Routes>
         </div>
 
@@ -53,4 +54,3 @@ export default function App() {
     </Router>
   );
 }
-

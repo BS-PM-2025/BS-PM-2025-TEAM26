@@ -23,10 +23,11 @@ export default function GuideDashboardPage() {
         <Link to="/guide/audio-upload" style={buttonStyle("#00b386")}>
           🎧 הוסף הסבר קולי לתערוכה
         </Link>
-
-        <Link to="/guide/tour-list" style={buttonStyle("#ff8800")}>
-          📋 צפייה בסיורים קיימים
+        
+        <Link to="/guide/tour-participants" style={buttonStyle("#ff8800")}>
+         👥 צפייה בנרשמים לסיורים שלי
         </Link>
+
 
         <Link to="/guide/manage-tours" style={buttonStyle("#6a0dad")}>
           🛠 ניהול סיורים (עריכה ומחיקה)
