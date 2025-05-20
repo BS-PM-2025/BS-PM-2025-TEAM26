@@ -16,25 +16,20 @@ export default function GuideDashboardPage() {
           flexWrap: "wrap"
         }}
       >
-        <Link
-          to="/guide/create-tour"
-          style={buttonStyle("#0077b6")}
-        >
+        <Link to="/guide/create-tour" style={buttonStyle("#0077b6")}>
           ➕ צור סיור מותאם אישית
         </Link>
 
-        <Link
-          to="/guide/audio-upload"
-          style={buttonStyle("#00b386")}
-        >
+        <Link to="/guide/audio-upload" style={buttonStyle("#00b386")}>
           🎧 הוסף הסבר קולי לתערוכה
         </Link>
 
-        <Link
-          to="/guide/tour-list"
-          style={buttonStyle("#ff8800")}
-        >
+        <Link to="/guide/tour-list" style={buttonStyle("#ff8800")}>
           📋 צפייה בסיורים קיימים
+        </Link>
+
+        <Link to="/guide/manage-tours" style={buttonStyle("#6a0dad")}>
+          🛠 ניהול סיורים (עריכה ומחיקה)
         </Link>
       </div>
     </div>

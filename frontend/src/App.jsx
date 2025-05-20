@@ -16,7 +16,7 @@ import GuidePage from "./pages/GuidePage";
 import CreateTourPage from "./pages/guide/CreateTourPage";
 import VisitorToursPage from "./pages/VisitorToursPage";
 import TourParticipantsPage from "./pages/guide/TourParticipantsPage1";
-
+import ManageToursPage from "./pages/guide/ManageToursPage";
 
 
 
@@ -42,7 +42,7 @@ export default function App() {
             <Route path="/guide/create-tour" element={<CreateTourPage />} />
             <Route path="/visitor/tours" element={<VisitorToursPage />} />
             <Route path="/guide/tours/:tourId/participants" element={<TourParticipantsPage />} />
-
+            <Route path="/guide/manage-tours" element={<ManageToursPage />} />
             
           </Routes>
         </div>
