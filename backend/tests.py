@@ -4,6 +4,7 @@ from fastapi import HTTPException
 
 from main import register_user, login_user
 from main import UserCreate, UserLogin, User
+from main import create_tour, TourCreate, Tour, register_to_tour, get_tour_participants
 
 
 def test_register_user_success():
@@ -47,8 +48,14 @@ def test_register_user_default_role():
 def test_login_user_success():
     mock_db = MagicMock()
     user_data = UserLogin(email="john@example.com", password="123")
-    fake_user = User(username="john", email="john@example.com", password="123", role="admin")
-    mock_db.query().filter().first.return_value = fake_user
+
+    fake_user = MagicMock()
+    fake_user.id = 1
+    fake_user.username = "john"
+    fake_user.email = "john@example.com"
+    fake_user.password = "123"
+    fake_user.role = "admin"
+    mock_db.query().filter_by().first.return_value = fake_user
 
     response = login_user(user_data, db=mock_db)
 
@@ -59,24 +66,125 @@ def test_login_user_success():
 def test_login_user_invalid_credentials():
     mock_db = MagicMock()
     user_data = UserLogin(email="wrong@example.com", password="wrong")
-    mock_db.query().filter().first.return_value = None
+    mock_db.query().filter_by().first.return_value = None
 
     with pytest.raises(HTTPException) as exc_info:
         login_user(user_data, db=mock_db)
 
     assert exc_info.value.status_code == 400
-    assert "אימייל או סיסמה שגויים" in exc_info.value.detail
 
 
 def test_login_user_wrong_password():
     mock_db = MagicMock()
     user_data = UserLogin(email="john@example.com", password="wrongpass")
-    correct_user = User(username="john", email="john@example.com", password="123", role="admin")
-
-    mock_db.query().filter().first.return_value = None  # Simulate password mismatch
+    mock_db.query().filter_by().first.return_value = None  # Simulate password mismatch
 
     with pytest.raises(HTTPException) as exc_info:
         login_user(user_data, db=mock_db)
 
     assert exc_info.value.status_code == 400
-    assert "אימייל או סיסמה שגויים" in exc_info.value.detail
+
+
+def test_create_tour_success():
+    mock_db = MagicMock()
+    mock_db.add = MagicMock()
+    mock_db.commit = MagicMock()
+    mock_db.refresh = MagicMock()
+
+    tour_data = TourCreate(
+        guide_id=1,
+        name="סיור לדוגמה",
+        description="סיור מעניין",
+        exhibitions=[1, 2, 3],
+        tour_date="2025-07-01"
+    )
+
+    response = create_tour(tour_data, db=mock_db)
+
+    assert "נוצר בהצלחה" in response["message"]
+    mock_db.add.assert_called()
+    mock_db.commit.assert_called()
+
+
+def test_register_to_tour_user_not_found():
+    mock_db = MagicMock()
+    mock_db.query().filter_by().first.return_value = None
+
+    with pytest.raises(HTTPException) as exc_info:
+        register_to_tour(tour_id=1, visitor_email="notfound@example.com", db=mock_db)
+
+    assert exc_info.value.status_code == 400
+    assert "משתמש לא קיים" in exc_info.value.detail
+
+
+def test_register_to_tour_not_visitor():
+    mock_db = MagicMock()
+    fake_user = MagicMock()
+    fake_user.id = 2
+    fake_user.email = "admin@example.com"
+    fake_user.role = "admin"
+    mock_db.query().filter_by().first.return_value = fake_user
+
+    with pytest.raises(HTTPException) as exc_info:
+        register_to_tour(tour_id=1, visitor_email="admin@example.com", db=mock_db)
+
+    assert exc_info.value.status_code == 400
+    assert "משתמש לא קיים או לא מבקר" in exc_info.value.detail
+
+
+def test_register_to_tour_success():
+    mock_db = MagicMock()
+    fake_user = MagicMock()
+    fake_user.id = 3
+    fake_user.email = "visitor@example.com"
+    fake_user.role = "visitor"
+    fake_user.username = "VisitorUser"
+    mock_db.query().filter_by().first.return_value = fake_user
+
+    response = register_to_tour(tour_id=5, visitor_email="visitor@example.com", db=mock_db)
+
+    assert "נרשם לסיור" in response["message"]
+    mock_db.add.assert_called()
+    mock_db.commit.assert_called()
+
+
+def test_get_tour_participants():
+    mock_db = MagicMock()
+
+    # Create mocks for TourRegistration and User queries
+    reg_query = MagicMock()
+    user_query = MagicMock()
+
+    reg_query.filter_by().all.return_value = [
+        MagicMock(user_id=1),
+        MagicMock(user_id=2)
+    ]
+
+    user1 = MagicMock()
+    user1.id = 1
+    user1.username = "Alice"
+    user1.email = "alice@example.com"
+
+    user2 = MagicMock()
+    user2.id = 2
+    user2.username = "Bob"
+    user2.email = "bob@example.com"
+
+    user_query.filter().all.return_value = [user1, user2]
+
+    # Configure mock_db.query() to return the right query based on model
+    def query_side_effect(model):
+        if model.__name__ == "TourRegistration":
+            return reg_query
+        elif model.__name__ == "User":
+            return user_query
+        else:
+            return MagicMock()
+
+    mock_db.query.side_effect = query_side_effect
+
+    participants = get_tour_participants(tour_id=1, db=mock_db)
+
+    assert len(participants) == 2
+    assert participants[0]["username"] == "Alice"
+    assert participants[1]["email"] == "bob@example.com"

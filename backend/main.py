@@ -20,14 +20,14 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
 # טבלאות במסד נתונים
 class User(Base):
-    _tablename_ = "users"
+    __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
@@ -35,7 +35,7 @@ class User(Base):
     role = Column(String(20), nullable=False, default="visitor")
 
 class Tour(Base):
-    _tablename_ = "tours"
+    __tablename__ = "tours"
     id = Column(Integer, primary_key=True)
     guide_id = Column(Integer, nullable=False)
     name = Column(String, nullable=False)
@@ -44,7 +44,7 @@ class Tour(Base):
     tour_date = Column(String)  # ✅ תאריך סיור
 
 class TourRegistration(Base):
-    _tablename_ = "tour_registrations"
+    __tablename__ = "tour_registrations"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
