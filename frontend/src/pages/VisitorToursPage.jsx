@@ -5,12 +5,10 @@ export default function VisitorToursPage() {
   const [loggedInUser, setLoggedInUser] = useState(null);
 
   useEffect(() => {
-    // שליפת המשתמש בעת טעינה
     const user = JSON.parse(localStorage.getItem("loggedInUser"));
     console.log("🔍 משתמש מחובר:", user);
     setLoggedInUser(user);
 
-    // שליפת הסיורים
     fetch("http://localhost:8000/tours")
       .then((res) => res.json())
       .then((data) => setTours(data))
@@ -24,12 +22,12 @@ export default function VisitorToursPage() {
     console.log("🟢 נלחץ כפתור הרשמה לסיור", tourId);
 
     if (!loggedInUser || !loggedInUser.email) {
-      alert("⚠️ לא נמצא משתמש מחובר. נא להתחבר.");
+      alert("⚠ לא נמצא משתמש מחובר. נא להתחבר.");
       return;
     }
 
     try {
-      const url = `http://localhost:8000/tours/${tourId}/register?visitor_email=${loggedInUser.email}`;
+      const url = 'http://localhost:8000/tours/${tourId}/register?visitor_email=${loggedInUser.email}';
       console.log("📡 שולח בקשה ל:", url);
 
       const res = await fetch(url, { method: "POST" });
@@ -48,12 +46,15 @@ export default function VisitorToursPage() {
       {tours.length === 0 ? (
         <p>אין סיורים להצגה</p>
       ) : (
-        <ul>
+        <ul style={{ listStyle: "none", padding: 0 }}>
           {tours.map((tour) => (
-            <li key={tour.id} style={{ marginBottom: "1.5rem" }}>
+            <li key={tour.id} style={{ marginBottom: "1.5rem", borderBottom: "1px solid #ccc", paddingBottom: "1rem" }}>
               <strong>{tour.name}</strong>
               <p>{tour.description}</p>
+              {tour.tour_date && <p><b>תאריך הסיור:</b> {tour.tour_date}</p>}
+              {tour.guide_name && <p><b>מדריך:</b> {tour.guide_name}</p>}
               <p><b>תערוכות:</b> {tour.exhibition_ids}</p>
+
               <button
                 onClick={() => handleRegister(tour.id)}
                 style={{

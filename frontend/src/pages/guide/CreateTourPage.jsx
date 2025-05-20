@@ -4,12 +4,12 @@ export default function CreateTourPage() {
   const [exhibitions, setExhibitions] = useState([]);
   const [selectedExhibitions, setSelectedExhibitions] = useState([]);
   const [activeExhibition, setActiveExhibition] = useState(null);
+  const [tourDate, setTourDate] = useState("");
 
   useEffect(() => {
     fetch("http://localhost:8000/exhibitions")
       .then((res) => res.json())
       .then((data) => {
-        // ודא שמה שאתה מקבל זה מערך
         if (Array.isArray(data)) {
           setExhibitions(data);
         } else {
@@ -20,7 +20,7 @@ export default function CreateTourPage() {
         console.error("שגיאה בטעינת תערוכות:", err);
       });
   }, []);
-  
+
   const handleAddToTour = (exhibition) => {
     if (!selectedExhibitions.find((ex) => ex.id === exhibition.id)) {
       setSelectedExhibitions([...selectedExhibitions, exhibition]);
@@ -39,13 +39,23 @@ export default function CreateTourPage() {
     const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
     if (!loggedInUser) return alert("יש להתחבר לפני שמירת הסיור");
 
+    const name = prompt("הזן שם לסיור:");
+    const description = prompt("תיאור הסיור (לא חובה):");
+    const tour_date = prompt("הזן תאריך לסיור (למשל 2025-06-10):");
+
+    if (!name || !tour_date) {
+      alert("שם ותאריך סיור נדרשים");
+      return;
+    }
+
     const tourData = {
       guide_id: loggedInUser.id,
-      name: prompt("הזן שם לסיור:"),
-      description: prompt("תיאור הסיור (לא חובה):"),
+      name,
+      description,
+      tour_date,
       exhibitions: selectedExhibitions.map((ex) => ex.id)
     };
-    
+
     try {
       const res = await fetch("http://localhost:8000/tours", {
         method: "POST",
@@ -76,8 +86,7 @@ export default function CreateTourPage() {
                 style={{ cursor: "pointer", color: "#0077b6", fontWeight: "bold", textDecoration: "underline" }}
               >
                 {ex.title}
-              </span>{" "}
-              - {ex.location}
+              </span>{" "}- {ex.location}
               <button
                 onClick={() => handleAddToTour(ex)}
                 style={{

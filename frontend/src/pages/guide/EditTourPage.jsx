@@ -7,6 +7,7 @@ export default function EditTourPage() {
   const [tour, setTour] = useState(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [tourDate, setTourDate] = useState("");
   const [exhibitions, setExhibitions] = useState([]);
   const [selected, setSelected] = useState([]);
 
@@ -23,6 +24,7 @@ export default function EditTourPage() {
         setTour(t);
         setName(t.name);
         setDescription(t.description || "");
+        setTourDate(t.tour_date || "");
         setSelected(t.exhibition_ids.split(",").map(Number));
       });
   }, [id]);
@@ -36,10 +38,15 @@ export default function EditTourPage() {
 
   const handleSubmit = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/tours/${id}`, {
+      const res = await fetch('http://localhost:8000/tours/${id}', {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, exhibitions: selected })
+        body: JSON.stringify({
+          name,
+          description,
+          tour_date: tourDate,
+          exhibitions: selected
+        })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail);
@@ -56,21 +63,43 @@ export default function EditTourPage() {
   return (
     <div style={{ padding: "2rem" }}>
       <h2>עריכת סיור</h2>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="שם הסיור" style={inputStyle} />
-      <br />
-      <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="תיאור" style={{ ...inputStyle, height: "100px" }} />
-      <br />
+
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="שם הסיור"
+        style={inputStyle}
+      />
+
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="תיאור"
+        style={{ ...inputStyle, height: "100px" }}
+      />
+
+      <input
+        type="date"
+        value={tourDate}
+        onChange={(e) => setTourDate(e.target.value)}
+        style={inputStyle}
+      />
+
       <h4>בחר תערוכות לסיור:</h4>
       <ul style={{ listStyle: "none", padding: 0 }}>
         {exhibitions.map(ex => (
           <li key={ex.id}>
             <label>
-              <input type="checkbox" checked={selected.includes(ex.id)} onChange={() => toggleExhibition(ex.id)} />
-              {" "}{ex.title}
+              <input
+                type="checkbox"
+                checked={selected.includes(ex.id)}
+                onChange={() => toggleExhibition(ex.id)}
+              /> {ex.title}
             </label>
           </li>
         ))}
       </ul>
+
       <button onClick={handleSubmit} style={btnStyle}>💾 שמור שינויים</button>
     </div>
   );

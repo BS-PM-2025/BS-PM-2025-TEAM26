@@ -20,14 +20,14 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
 # טבלאות במסד נתונים
 class User(Base):
-    __tablename__ = "users"
+    _tablename_ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
@@ -35,15 +35,16 @@ class User(Base):
     role = Column(String(20), nullable=False, default="visitor")
 
 class Tour(Base):
-    __tablename__ = "tours"
+    _tablename_ = "tours"
     id = Column(Integer, primary_key=True)
     guide_id = Column(Integer, nullable=False)
     name = Column(String, nullable=False)
     description = Column(String)
-    exhibition_ids = Column(String)  # מזהה תערוכות מופרדות בפסיקים
+    exhibition_ids = Column(String)
+    tour_date = Column(String)  # ✅ תאריך סיור
 
 class TourRegistration(Base):
-    __tablename__ = "tour_registrations"
+    _tablename_ = "tour_registrations"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
@@ -72,9 +73,18 @@ class UserLogin(BaseModel):
     password: str
 
 class TourCreate(BaseModel):
+    guide_id: int
     name: str
     description: Optional[str]
-    exhibitions: Optional[List[int]] = []
+    exhibitions: List[int]
+    tour_date: str  # ✅ תאריך סיור
+
+class TourUpdate(BaseModel):
+    name: str
+    description: Optional[str]
+    exhibitions: List[int]
+    tour_date: str
+
 
 
 class TourSignup(BaseModel):
@@ -280,17 +290,18 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
 
 @app.post("/tours")
 def create_tour(tour: TourCreate, db: Session = Depends(get_db)):
-    exhibition_ids = ",".join(map(str, tour.exhibitions or []))
     new_tour = Tour(
         guide_id=tour.guide_id,
         name=tour.name,
         description=tour.description,
-        exhibition_ids=exhibition_ids
+        exhibition_ids=",".join(map(str, tour.exhibitions)),
+        tour_date=tour.tour_date  # ✅ הוספה
     )
     db.add(new_tour)
     db.commit()
     db.refresh(new_tour)
     return {"message": f"הסיור '{tour.name}' נוצר בהצלחה!", "id": new_tour.id}
+
 
 
 @app.post("/tours/{tour_id}/register")
@@ -301,7 +312,7 @@ def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get
     if not user:
         print("❌ המשתמש לא נמצא במסד")
     elif user.role != "visitor":
-        print(f"⚠️ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
+        print(f"⚠ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
 
     if not user or user.role != "visitor":
         raise HTTPException(status_code=400, detail="משתמש לא קיים או לא מבקר")
@@ -345,7 +356,7 @@ def delete_tour(tour_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/tours/{tour_id}")
-def update_tour(tour_id: int, updated: TourCreate, db: Session = Depends(get_db)):
+def update_tour(tour_id: int, updated: TourUpdate, db: Session = Depends(get_db)):
     tour = db.query(Tour).filter_by(id=tour_id).first()
     if not tour:
         raise HTTPException(status_code=404, detail="סיור לא נמצא")
@@ -353,5 +364,6 @@ def update_tour(tour_id: int, updated: TourCreate, db: Session = Depends(get_db)
     tour.name = updated.name
     tour.description = updated.description
     tour.exhibition_ids = ",".join(map(str, updated.exhibitions or []))
+    tour.tour_date = updated.tour_date  # ✅ הוספה
     db.commit()
     return {"message": "הסיור עודכן בהצלחה"}
