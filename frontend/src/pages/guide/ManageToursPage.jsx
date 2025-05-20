@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function ManageToursPage() {
   const [tours, setTours] = useState([]);
   const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch("http://localhost:8000/tours")
@@ -48,7 +50,7 @@ export default function ManageToursPage() {
               <p><b>תערוכות:</b> {tour.exhibition_ids}</p>
               <div style={{ display: "flex", gap: "1rem" }}>
                 <button onClick={() => handleDelete(tour.id)} style={btn("#d62828")}>🗑 מחק</button>
-                <button onClick={() => alert("עמוד עריכה בקרוב")} style={btn("#ffc107")}>✏ ערוך</button>
+                <button onClick={() => navigate(`/guide/edit-tour/${tour.id}`)} style={btn("#ffc107")}>✏ ערוך</button>
               </div>
             </li>
           ))}

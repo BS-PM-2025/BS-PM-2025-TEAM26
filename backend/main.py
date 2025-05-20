@@ -72,7 +72,6 @@ class UserLogin(BaseModel):
     password: str
 
 class TourCreate(BaseModel):
-    guide_id: int
     name: str
     description: Optional[str]
     exhibitions: Optional[List[int]] = []
@@ -328,3 +327,31 @@ def get_museum_info():
 @app.get("/tours")
 def get_all_tours(db: Session = Depends(get_db)):
     return db.query(Tour).all()
+
+
+@app.delete("/tours/{tour_id}")
+def delete_tour(tour_id: int, db: Session = Depends(get_db)):
+    tour = db.query(Tour).filter_by(id=tour_id).first()
+    if not tour:
+        raise HTTPException(status_code=404, detail="סיור לא נמצא")
+
+    # מחיקת כל ההרשמות הקשורות לסיור
+    db.query(TourRegistration).filter_by(tour_id=tour_id).delete()
+
+    # מחיקת הסיור עצמו
+    db.delete(tour)
+    db.commit()
+    return {"message": f"הסיור {tour.name} נמחק בהצלחה"}
+
+
+@app.put("/tours/{tour_id}")
+def update_tour(tour_id: int, updated: TourCreate, db: Session = Depends(get_db)):
+    tour = db.query(Tour).filter_by(id=tour_id).first()
+    if not tour:
+        raise HTTPException(status_code=404, detail="סיור לא נמצא")
+
+    tour.name = updated.name
+    tour.description = updated.description
+    tour.exhibition_ids = ",".join(map(str, updated.exhibitions or []))
+    db.commit()
+    return {"message": "הסיור עודכן בהצלחה"}
