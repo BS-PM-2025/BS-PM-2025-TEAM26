@@ -35,6 +35,7 @@ export default function LoginPage() {
       // שמירה ב-localStorage
       localStorage.setItem('loggedInUser', JSON.stringify(data));
 
+
       // ניווט לפי תפקיד
       if (data.role === "guide") {
         navigate("/guide");

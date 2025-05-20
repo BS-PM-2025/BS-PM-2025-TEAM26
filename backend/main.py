@@ -272,7 +272,12 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     found = db.query(User).filter_by(email=user.email, password=user.password).first()
     if not found:
         raise HTTPException(status_code=400, detail="אימייל או סיסמה שגויים")
-    return {"username": found.username, "role": found.role}
+    return {
+        "id": found.id,
+        "username": found.username,
+        "email": found.email,  # ← זו השורה החשובה!
+        "role": found.role
+    }
 
 @app.post("/tours")
 def create_tour(tour: TourCreate, db: Session = Depends(get_db)):
@@ -291,13 +296,24 @@ def create_tour(tour: TourCreate, db: Session = Depends(get_db)):
 
 @app.post("/tours/{tour_id}/register")
 def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get_db)):
+    print(f"📥 ניסיון רישום לסיור: tour_id={tour_id}, visitor_email={visitor_email}")
+
     user = db.query(User).filter_by(email=visitor_email).first()
+    if not user:
+        print("❌ המשתמש לא נמצא במסד")
+    elif user.role != "visitor":
+        print(f"⚠️ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
+
     if not user or user.role != "visitor":
         raise HTTPException(status_code=400, detail="משתמש לא קיים או לא מבקר")
+
     registration = TourRegistration(tour_id=tour_id, user_id=user.id)
     db.add(registration)
     db.commit()
+
+    print(f"✅ המשתמש {user.email} נרשם לסיור {tour_id}")
     return {"message": f"המשתמש {user.username} נרשם לסיור {tour_id}"}
+
 
 @app.get("/tours/{tour_id}/participants")
 def get_tour_participants(tour_id: int, db: Session = Depends(get_db)):

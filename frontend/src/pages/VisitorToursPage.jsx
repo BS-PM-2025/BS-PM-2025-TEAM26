@@ -2,9 +2,15 @@ import React, { useEffect, useState } from "react";
 
 export default function VisitorToursPage() {
   const [tours, setTours] = useState([]);
-  const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  const [loggedInUser, setLoggedInUser] = useState(null);
 
   useEffect(() => {
+    // שליפת המשתמש בעת טעינה
+    const user = JSON.parse(localStorage.getItem("loggedInUser"));
+    console.log("🔍 משתמש מחובר:", user);
+    setLoggedInUser(user);
+
+    // שליפת הסיורים
     fetch("http://localhost:8000/tours")
       .then((res) => res.json())
       .then((data) => setTours(data))
@@ -15,15 +21,23 @@ export default function VisitorToursPage() {
   }, []);
 
   const handleRegister = async (tourId) => {
+    console.log("🟢 נלחץ כפתור הרשמה לסיור", tourId);
+
+    if (!loggedInUser || !loggedInUser.email) {
+      alert("⚠️ לא נמצא משתמש מחובר. נא להתחבר.");
+      return;
+    }
+
     try {
-      const res = await fetch(`http://localhost:8000/tours/${tourId}/register?visitor_email=${loggedInUser.email}`, {
-        method: "POST"
-      });
+      const url = `http://localhost:8000/tours/${tourId}/register?visitor_email=${loggedInUser.email}`;
+      console.log("📡 שולח בקשה ל:", url);
+
+      const res = await fetch(url, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "שגיאה בהרשמה");
       alert(data.message);
     } catch (err) {
-      console.error(err);
+      console.error("❌ שגיאה בהרשמה לסיור:", err);
       alert("לא ניתן להירשם לסיור.");
     }
   };
@@ -40,7 +54,19 @@ export default function VisitorToursPage() {
               <strong>{tour.name}</strong>
               <p>{tour.description}</p>
               <p><b>תערוכות:</b> {tour.exhibition_ids}</p>
-              <button onClick={() => handleRegister(tour.id)}>הירשם</button>
+              <button
+                onClick={() => handleRegister(tour.id)}
+                style={{
+                  padding: "0.4rem 1rem",
+                  backgroundColor: "#0077b6",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }}
+              >
+                הירשם
+              </button>
             </li>
           ))}
         </ul>
