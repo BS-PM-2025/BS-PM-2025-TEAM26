@@ -4,11 +4,15 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from prometheus_fastapi_instrumentator import Instrumentator
+
 
 Base = declarative_base()
 
 # יצירת אפליקציה
 app = FastAPI()
+Instrumentator().instrument(app).expose(app)
+
 
 # הגדרת CORS
 app.add_middleware(
