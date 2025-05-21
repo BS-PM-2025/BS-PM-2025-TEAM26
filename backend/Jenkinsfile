@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    environment {
+        VENV_DIR = ".venv"
+    }
+
+    stages {
+        stage('🔧 Setup Python Virtual Environment') {
+            steps {
+                sh '''
+                    python3 -m venv $VENV_DIR
+                    source $VENV_DIR/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
+            }
+        }
+
+        stage('🧪 Run Pytest - All Tests') {
+            steps {
+                sh '''
+                    source $VENV_DIR/bin/activate
+                    pytest tests/ -v --tb=short --maxfail=5
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "🔚 Pipeline finished"
+        }
+        success {
+            echo "✅ All tests passed!"
+        }
+        failure {
+            echo "❌ Tests failed. Check logs for details."
+        }
+    }
+}
