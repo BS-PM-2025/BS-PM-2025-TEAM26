@@ -38,7 +38,7 @@ export default function EditTourPage() {
 
   const handleSubmit = async () => {
     try {
-      const res = await fetch('http://localhost:8000/tours/${id}', {
+      const res = await fetch(`http://localhost:8000/tours/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

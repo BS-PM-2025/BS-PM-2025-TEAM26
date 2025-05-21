@@ -22,12 +22,12 @@ export default function VisitorToursPage() {
     console.log("🟢 נלחץ כפתור הרשמה לסיור", tourId);
 
     if (!loggedInUser || !loggedInUser.email) {
-      alert("⚠ לא נמצא משתמש מחובר. נא להתחבר.");
+      alert("⚠️ לא נמצא משתמש מחובר. נא להתחבר.");
       return;
     }
 
     try {
-      const url = 'http://localhost:8000/tours/${tourId}/register?visitor_email=${loggedInUser.email}';
+      const url = `http://localhost:8000/tours/${tourId}/register?visitor_email=${loggedInUser.email}`;
       console.log("📡 שולח בקשה ל:", url);
 
       const res = await fetch(url, { method: "POST" });

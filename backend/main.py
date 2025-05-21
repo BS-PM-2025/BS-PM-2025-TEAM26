@@ -4,14 +4,13 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
-from prometheus_fastapi_instrumentator import Instrumentator
-
+from sqlalchemy import Text, ForeignKey, DateTime
+from datetime import datetime
 
 Base = declarative_base()
 
 # יצירת אפליקציה
 app = FastAPI()
-Instrumentator().instrument(app).expose(app)
 
 # הגדרת CORS
 app.add_middleware(
@@ -23,14 +22,14 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
 # טבלאות במסד נתונים
 class User(Base):
-    _tablename_ = "users"
+    __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
@@ -38,7 +37,7 @@ class User(Base):
     role = Column(String(20), nullable=False, default="visitor")
 
 class Tour(Base):
-    _tablename_ = "tours"
+    __tablename__ = "tours"
     id = Column(Integer, primary_key=True)
     guide_id = Column(Integer, nullable=False)
     name = Column(String, nullable=False)
@@ -47,10 +46,20 @@ class Tour(Base):
     tour_date = Column(String)  # ✅ תאריך סיור
 
 class TourRegistration(Base):
-    _tablename_ = "tour_registrations"
+    __tablename__ = "tour_registrations"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
+
+
+class Message(Base):
+    __tablename__ = "messages"
+    id = Column(Integer, primary_key=True)
+    tour_id = Column(Integer, ForeignKey("tours.id"))
+    sender_id = Column(Integer, ForeignKey("users.id"))
+    recipient_id = Column(Integer, ForeignKey("users.id"))
+    content = Column(Text, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)    
 
 # יצירת טבלאות במסד אם לא קיימות
 Base.metadata.create_all(bind=engine)
@@ -110,6 +119,11 @@ class MuseumInfo(BaseModel):
     opening_hours: str
     description: str
     services: List[str]
+
+class MessageRequest(BaseModel):
+    content: str
+    sender_id: int
+
 
 # דאטה זמני
 exhibitions = [
@@ -315,7 +329,7 @@ def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get
     if not user:
         print("❌ המשתמש לא נמצא במסד")
     elif user.role != "visitor":
-        print(f"⚠ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
+        print(f"⚠️ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
 
     if not user or user.role != "visitor":
         raise HTTPException(status_code=400, detail="משתמש לא קיים או לא מבקר")
@@ -388,3 +402,33 @@ def update_tour(tour_id: int, updated: TourUpdate, db: Session = Depends(get_db)
     tour.tour_date = updated.tour_date  # ✅ הוספה
     db.commit()
     return {"message": "הסיור עודכן בהצלחה"}
+
+
+@app.post("/tours/{tour_id}/send-message")
+def send_message_to_tour(tour_id: int, msg: MessageRequest, db: Session = Depends(get_db)):
+    registrations = db.query(TourRegistration).filter_by(tour_id=tour_id).all()
+    if not registrations:
+        raise HTTPException(status_code=404, detail="אין נרשמים לסיור")
+
+    for reg in registrations:
+        db.add(Message(
+            tour_id=tour_id,
+            sender_id=msg.sender_id,
+            recipient_id=reg.user_id,
+            content=msg.content
+        ))
+    db.commit()
+    return {"message": f"ההודעה נשלחה ל-{len(registrations)} נרשמים"}
+
+
+@app.get("/messages")
+def get_messages(user_id: int, db: Session = Depends(get_db)):
+    messages = db.query(Message).filter_by(recipient_id=user_id).order_by(Message.timestamp.desc()).all()
+    return [
+        {
+            "from": db.query(User).filter_by(id=m.sender_id).first().username,
+            "content": m.content,
+            "timestamp": m.timestamp
+        }
+        for m in messages
+    ]

@@ -11,22 +11,19 @@ export default function TourParticipantsPage() {
 
     const fetchData = async () => {
       try {
-        // 1. שליפת כל הסיורים
         const res = await fetch("http://localhost:8000/tours");
         const allTours = await res.json();
         const myTours = allTours.filter((t) => t.guide_id === loggedInUser.id);
         setTours(myTours);
 
-        // 2. שליפת כל הנרשמים במקביל
         const results = await Promise.all(
           myTours.map(async (tour) => {
-            const res = await fetch('http://localhost:8000/tours/${tour.id}/participants');
+            const res = await fetch(`http://localhost:8000/tours/${tour.id}/participants`);
             const users = await res.json();
             return { tourId: tour.id, users };
           })
         );
 
-        // 3. מיפוי נרשמים לפי tour.id
         const map = {};
         results.forEach(({ tourId, users }) => {
           map[tourId] = users;
@@ -43,6 +40,28 @@ export default function TourParticipantsPage() {
 
   const toggleTour = (tourId) => {
     setOpenTourId((prev) => (prev === tourId ? null : tourId));
+  };
+
+  const handleSendToUser = async (user, tourId) => {
+    const message = prompt(`כתוב הודעה ל-${user.username} (${user.email}):`);
+    if (!message) return;
+
+    try {
+      const res = await fetch(`http://localhost:8000/tours/${tourId}/send-message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sender_id: loggedInUser.id,
+          content: message
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail);
+      alert("✔ ההודעה נשלחה בהצלחה!");
+    } catch (err) {
+      console.error("❌ שגיאה בשליחת ההודעה:", err);
+      alert("שליחת ההודעה נכשלה.");
+    }
   };
 
   return (
@@ -75,8 +94,23 @@ export default function TourParticipantsPage() {
                   {participantsMap[tour.id]?.length > 0 ? (
                     <ul>
                       {participantsMap[tour.id].map((user) => (
-                        <li key={user.id}>
+                        <li key={user.id} style={{ marginBottom: "0.5rem" }}>
                           <b>{user.username}</b> ({user.email})
+                          <button
+                            onClick={() => handleSendToUser(user, tour.id)}
+                            style={{
+                              marginRight: "1rem",
+                              marginInlineStart: "10px",
+                              padding: "0.3rem 0.6rem",
+                              backgroundColor: "#00b386",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "5px",
+                              cursor: "pointer"
+                            }}
+                          >
+                            📤 שלח הודעה
+                          </button>
                         </li>
                       ))}
                     </ul>

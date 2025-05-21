@@ -54,6 +54,11 @@ export default function Navbar() {
           <li><Link to="/guide-dashboard" style={{ color: "white", textDecoration: "none" }}>לוח מדריך</Link></li>
         )}
 
+        {loggedInUser?.role === "visitor" && (
+        <Link to="/my-messages">ההודעות שלי</Link>
+        )}
+
+
         {!loggedInUser ? (
           <>
             <li><Link to="/register" style={{ color: "white", textDecoration: "none" }}>הרשמה</Link></li>
