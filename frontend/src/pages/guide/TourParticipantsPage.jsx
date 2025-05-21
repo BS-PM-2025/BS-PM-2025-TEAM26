@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 export default function TourParticipantsPage() {
   const [tours, setTours] = useState([]);
   const [participantsMap, setParticipantsMap] = useState({});
+  const [feedbackMap, setFeedbackMap] = useState({});
   const [openTourId, setOpenTourId] = useState(null);
   const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
 
@@ -18,20 +19,31 @@ export default function TourParticipantsPage() {
 
         const results = await Promise.all(
           myTours.map(async (tour) => {
-            const res = await fetch(`http://localhost:8000/tours/${tour.id}/participants`);
-            const users = await res.json();
-            return { tourId: tour.id, users };
+            const [usersRes, feedbackRes] = await Promise.all([
+              fetch(`http://localhost:8000/tours/${tour.id}/participants`).then(res => res.json()),
+              fetch(`http://localhost:8000/tours/${tour.id}/feedbacks`).then(res => res.json())
+            ]);
+
+            return {
+              tourId: tour.id,
+              users: usersRes,
+              feedbacks: feedbackRes
+            };
           })
         );
 
-        const map = {};
-        results.forEach(({ tourId, users }) => {
-          map[tourId] = users;
+        const participants = {};
+        const feedbacks = {};
+        results.forEach(({ tourId, users, feedbacks: fbs }) => {
+          participants[tourId] = users;
+          feedbacks[tourId] = fbs;
         });
-        setParticipantsMap(map);
+
+        setParticipantsMap(participants);
+        setFeedbackMap(feedbacks);
 
       } catch (err) {
-        console.error("❌ שגיאה כללית:", err);
+        console.error("❌ שגיאה בטעינת סיורים:", err);
       }
     };
 
@@ -72,7 +84,7 @@ export default function TourParticipantsPage() {
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
           {tours.map((tour) => (
-            <li key={tour.id} style={{ marginBottom: "1.5rem", border: "1px solid #ccc", borderRadius: "8px" }}>
+            <li key={tour.id} style={{ marginBottom: "2rem", border: "1px solid #ccc", borderRadius: "8px" }}>
               <div
                 onClick={() => toggleTour(tour.id)}
                 style={{
@@ -99,7 +111,6 @@ export default function TourParticipantsPage() {
                           <button
                             onClick={() => handleSendToUser(user, tour.id)}
                             style={{
-                              marginRight: "1rem",
                               marginInlineStart: "10px",
                               padding: "0.3rem 0.6rem",
                               backgroundColor: "#00b386",
@@ -115,8 +126,31 @@ export default function TourParticipantsPage() {
                       ))}
                     </ul>
                   ) : (
-                    <p>📭 עדיין אין נרשמים לסיור זה.</p>
+                    <p>📭 אין נרשמים לסיור זה.</p>
                   )}
+
+                  {/* ✅ פידבקים */}
+                  <div style={{ marginTop: "1.5rem" }}>
+                    <h4>💬 פידבק מהמשתתפים</h4>
+                    {feedbackMap[tour.id]?.length > 0 ? (
+                      <ul style={{ listStyle: "none", padding: 0 }}>
+                        {feedbackMap[tour.id].map((fb, index) => (
+                          <li key={index} style={{
+                            border: "1px solid #ccc",
+                            borderRadius: "6px",
+                            padding: "0.5rem",
+                            marginBottom: "0.5rem",
+                            backgroundColor: "#f4f4f4"
+                          }}>
+                            <p><strong>{fb.visitor_name}</strong> ({new Date(fb.timestamp).toLocaleString()})</p>
+                            <p>{fb.content}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>🕓 עדיין לא התקבלו פידבקים לסיור.</p>
+                    )}
+                  </div>
                 </div>
               )}
             </li>

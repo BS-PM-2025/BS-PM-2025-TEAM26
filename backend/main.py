@@ -6,7 +6,8 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from sqlalchemy import Text, ForeignKey, DateTime
 from datetime import datetime
-
+from sqlalchemy import DateTime  # אם לא הוספת
+from datetime import datetime
 Base = declarative_base()
 
 # יצירת אפליקציה
@@ -60,6 +61,14 @@ class Message(Base):
     recipient_id = Column(Integer, ForeignKey("users.id"))
     content = Column(Text, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)    
+
+class Feedback(Base):
+    __tablename__ = "feedbacks"
+    id = Column(Integer, primary_key=True)
+    tour_id = Column(Integer, ForeignKey("tours.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    content = Column(Text, nullable=False)
+
 
 # יצירת טבלאות במסד אם לא קיימות
 Base.metadata.create_all(bind=engine)
@@ -123,6 +132,11 @@ class MuseumInfo(BaseModel):
 class MessageRequest(BaseModel):
     content: str
     sender_id: int
+
+class FeedbackRequest(BaseModel):
+    tour_id: int
+    user_id: int
+    content: str
 
 
 # דאטה זמני
@@ -431,4 +445,24 @@ def get_messages(user_id: int, db: Session = Depends(get_db)):
             "timestamp": m.timestamp
         }
         for m in messages
+    ]
+
+@app.post("/feedbacks")
+def submit_feedback(feedback: FeedbackRequest, db: Session = Depends(get_db)):
+    new_feedback = Feedback(**feedback.dict())
+    db.add(new_feedback)
+    db.commit()
+    return {"message": "הפידבק נשלח בהצלחה"}
+
+@app.get("/tours/{tour_id}/feedbacks")
+def get_feedbacks(tour_id: int, db: Session = Depends(get_db)):
+    feedbacks = db.query(Feedback).filter_by(tour_id=tour_id).all()
+    users = db.query(User).all()
+    user_map = {u.id: u.username for u in users}
+    return [
+        {
+            "user": user_map.get(f.user_id, "לא ידוע"),
+            "content": f.content
+        }
+        for f in feedbacks
     ]
