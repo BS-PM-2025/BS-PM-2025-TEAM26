@@ -8,6 +8,7 @@ from sqlalchemy import Text, ForeignKey, DateTime
 from datetime import datetime
 from sqlalchemy import DateTime  # אם לא הוספת
 from datetime import datetime
+
 Base = declarative_base()
 
 # יצירת אפליקציה
