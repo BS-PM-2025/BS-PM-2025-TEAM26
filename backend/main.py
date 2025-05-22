@@ -24,14 +24,14 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
 # טבלאות במסד נתונים
 class User(Base):
-    __tablename__ = "users"
+    _tablename_ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
@@ -39,7 +39,7 @@ class User(Base):
     role = Column(String(20), nullable=False, default="visitor")
 
 class Tour(Base):
-    __tablename__ = "tours"
+    _tablename_ = "tours"
     id = Column(Integer, primary_key=True)
     guide_id = Column(Integer, nullable=False)
     name = Column(String, nullable=False)
@@ -48,14 +48,14 @@ class Tour(Base):
     tour_date = Column(String)  # ✅ תאריך סיור
 
 class TourRegistration(Base):
-    __tablename__ = "tour_registrations"
+    _tablename_ = "tour_registrations"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
 
 
 class Message(Base):
-    __tablename__ = "messages"
+    _tablename_ = "messages"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, ForeignKey("tours.id"))
     sender_id = Column(Integer, ForeignKey("users.id"))
@@ -64,7 +64,7 @@ class Message(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)    
 
 class Feedback(Base):
-    __tablename__ = "feedbacks"
+    _tablename_ = "feedbacks"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, ForeignKey("tours.id"))
     user_id = Column(Integer, ForeignKey("users.id"))
@@ -261,19 +261,22 @@ events = [
         "id": 1,
         "title": "פתיחת תערוכת 'חלומות צלולים'",
         "date": "2025-01-01",
-        "description": "אירוע פתיחה חגיגי."
+        "description": "אירוע פתיחה חגיגי.",
+          "image": "/images/fe-dreams.jpg"
     },
     {
         "id": 2,
         "title": "סדנת הדפס לילדים",
         "date": "2025-01-15",
-        "description": "סדנת יצירה חווייתית."
+        "description": "סדנת יצירה חווייתית.",
+        "image": "/images/fe-print.jpg"
     },
     {
         "id": 3,
         "title": "סיור מודרך בתערוכת 'שדה'",
         "date": "2025-02-10",
-        "description": "סיור עם האוצרות בעקבות 'שדה'."
+        "description": "סיור עם האוצרות בעקבות 'שדה'.",
+        "image": "/images/fe-october7-event.jpg"
     }
 ]
 
@@ -344,7 +347,7 @@ def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get
     if not user:
         print("❌ המשתמש לא נמצא במסד")
     elif user.role != "visitor":
-        print(f"⚠️ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
+        print(f"⚠ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
 
     if not user or user.role != "visitor":
         raise HTTPException(status_code=400, detail="משתמש לא קיים או לא מבקר")
