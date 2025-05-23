@@ -4,30 +4,33 @@ export default function VisitorToursPage() {
   const [tours, setTours] = useState([]);
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [feedbacks, setFeedbacks] = useState({});
-  const [registeredTours, setRegisteredTours] = useState([]); // נרשמים בפועל
+  const [registeredTours, setRegisteredTours] = useState([]);
+  const [ratings, setRatings] = useState({});
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("loggedInUser"));
     setLoggedInUser(user);
 
     fetch("http://localhost:8000/tours")
-      .then((res) => res.json())
-      .then((data) => setTours(data))
-      .catch((err) => {
+      .then(res => res.json())
+      .then(data => setTours(data))
+      .catch(err => {
         console.error("שגיאה בטעינת סיורים:", err);
         alert("אירעה שגיאה בטעינה.");
       });
 
     if (user) {
-      fetch(`http://localhost:8000/tours`)
+      fetch("http://localhost:8000/tours")
         .then(res => res.json())
         .then(allTours => {
           const regPromises = allTours.map(tour =>
             fetch(`http://localhost:8000/tours/${tour.id}/participants`)
               .then(res => res.json())
-              .then(users => ({ tourId: tour.id, isRegistered: users.some(u => u.email === user.email) }))
+              .then(users => ({
+                tourId: tour.id,
+                isRegistered: users.some(u => u.email === user.email)
+              }))
           );
-
           Promise.all(regPromises).then(results => {
             const ids = results.filter(r => r.isRegistered).map(r => r.tourId);
             setRegisteredTours(ids);
@@ -37,7 +40,7 @@ export default function VisitorToursPage() {
   }, []);
 
   const handleRegister = async (tourId) => {
-    if (!loggedInUser || !loggedInUser.email) {
+    if (!loggedInUser?.email) {
       alert("⚠️ לא נמצא משתמש מחובר. נא להתחבר.");
       return;
     }
@@ -57,7 +60,12 @@ export default function VisitorToursPage() {
 
   const handleFeedbackSubmit = async (tourId) => {
     const content = feedbacks[tourId];
-    if (!content) return alert("נא להזין תוכן לפידבק.");
+    const rating = ratings[tourId] || 0;
+
+    if (!content && !ratings[tourId]) {
+        return alert("נא להזין פידבק או לבחור דירוג בכוכבים.");
+      }
+      
 
     try {
       const res = await fetch("http://localhost:8000/feedbacks", {
@@ -66,13 +74,15 @@ export default function VisitorToursPage() {
         body: JSON.stringify({
           tour_id: tourId,
           user_id: loggedInUser.id,
-          content: content
+          content: content,
+          rating: rating
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "שגיאה בשליחת הפידבק");
       alert(data.message);
       setFeedbacks((prev) => ({ ...prev, [tourId]: "" }));
+      setRatings((prev) => ({ ...prev, [tourId]: 0 }));
     } catch (err) {
       console.error("❌ שגיאה בשליחת פידבק:", err);
       alert("שגיאה בשליחת הפידבק.");
@@ -95,39 +105,59 @@ export default function VisitorToursPage() {
               <p><b>תערוכות:</b> {tour.exhibition_ids}</p>
 
               {registeredTours.includes(tour.id) ? (
-  <button
-    disabled
-    style={{
-      padding: "0.4rem 1rem",
-      backgroundColor: "#28a745",
-      color: "white",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "default"
-    }}
-  >
-    ✔ נרשמת
-  </button>
-) : (
-  <button
-    onClick={() => handleRegister(tour.id)}
-    style={{
-      padding: "0.4rem 1rem",
-      backgroundColor: "#0077b6",
-      color: "white",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer"
-    }}
-  >
-    הירשם
-  </button>
-)}
-
+                <button
+                  disabled
+                  style={{
+                    padding: "0.4rem 1rem",
+                    backgroundColor: "#28a745",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "default"
+                  }}
+                >
+                  ✔ נרשמת
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleRegister(tour.id)}
+                  style={{
+                    padding: "0.4rem 1rem",
+                    backgroundColor: "#0077b6",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer"
+                  }}
+                >
+                  הירשם
+                </button>
+              )}
 
               {registeredTours.includes(tour.id) && (
                 <div style={{ marginTop: "1rem" }}>
                   <h4>📝 פידבק למדריך</h4>
+
+                  <div style={{ marginBottom: "0.5rem" }}>
+                    <p style={{ margin: "0.3rem 0" }}>דרג את הסיור:</p>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span
+                        key={star}
+                        onClick={() => {
+                            const current = ratings[tour.id] || 0;
+                            setRatings({ ...ratings, [tour.id]: current === star ? 0 : star });
+                          }}                          
+                        style={{
+                          fontSize: "1.5rem",
+                          cursor: "pointer",
+                          color: ratings[tour.id] >= star ? "#ffc107" : "#ccc"
+                        }}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+
                   <textarea
                     rows="3"
                     value={feedbacks[tour.id] || ""}

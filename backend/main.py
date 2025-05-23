@@ -8,6 +8,7 @@ from sqlalchemy import Text, ForeignKey, DateTime
 from datetime import datetime
 from sqlalchemy import DateTime  # אם לא הוספת
 from datetime import datetime
+from sqlalchemy import Float
 
 Base = declarative_base()
 
@@ -24,14 +25,14 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
 # טבלאות במסד נתונים
 class User(Base):
-    _tablename_ = "users"
+    __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
@@ -39,7 +40,7 @@ class User(Base):
     role = Column(String(20), nullable=False, default="visitor")
 
 class Tour(Base):
-    _tablename_ = "tours"
+    __tablename__ = "tours"
     id = Column(Integer, primary_key=True)
     guide_id = Column(Integer, nullable=False)
     name = Column(String, nullable=False)
@@ -48,27 +49,29 @@ class Tour(Base):
     tour_date = Column(String)  # ✅ תאריך סיור
 
 class TourRegistration(Base):
-    _tablename_ = "tour_registrations"
+    __tablename__ = "tour_registrations"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
 
 
 class Message(Base):
-    _tablename_ = "messages"
+    __tablename__ = "messages"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, ForeignKey("tours.id"))
     sender_id = Column(Integer, ForeignKey("users.id"))
     recipient_id = Column(Integer, ForeignKey("users.id"))
     content = Column(Text, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)    
+    timestamp = Column(DateTime, default=datetime.utcnow)  
 
 class Feedback(Base):
-    _tablename_ = "feedbacks"
+    __tablename__ = "feedbacks"
     id = Column(Integer, primary_key=True)
-    tour_id = Column(Integer, ForeignKey("tours.id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
-    content = Column(Text, nullable=False)
+    tour_id = Column(Integer, nullable=False)
+    user_id = Column(Integer, nullable=False)
+    content = Column(Text, nullable=True) 
+    rating = Column(Float, nullable=True)
+ 
 
 
 # יצירת טבלאות במסד אם לא קיימות
@@ -138,6 +141,13 @@ class FeedbackRequest(BaseModel):
     tour_id: int
     user_id: int
     content: str
+
+class FeedbackCreate(BaseModel):
+    tour_id: int
+    user_id: int
+    content: Optional[str] = None  # ← הפך לאופציונלי
+    rating: Optional[float] = None
+
 
 
 # דאטה זמני
@@ -347,7 +357,7 @@ def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get
     if not user:
         print("❌ המשתמש לא נמצא במסד")
     elif user.role != "visitor":
-        print(f"⚠ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
+        print(f"⚠️ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
 
     if not user or user.role != "visitor":
         raise HTTPException(status_code=400, detail="משתמש לא קיים או לא מבקר")
@@ -451,12 +461,6 @@ def get_messages(user_id: int, db: Session = Depends(get_db)):
         for m in messages
     ]
 
-@app.post("/feedbacks")
-def submit_feedback(feedback: FeedbackRequest, db: Session = Depends(get_db)):
-    new_feedback = Feedback(**feedback.dict())
-    db.add(new_feedback)
-    db.commit()
-    return {"message": "הפידבק נשלח בהצלחה"}
 
 @app.get("/tours/{tour_id}/feedbacks")
 def get_feedbacks(tour_id: int, db: Session = Depends(get_db)):
@@ -466,7 +470,31 @@ def get_feedbacks(tour_id: int, db: Session = Depends(get_db)):
     return [
         {
             "user": user_map.get(f.user_id, "לא ידוע"),
-            "content": f.content
+            "content": f.content,
+             "rating": f.rating
         }
         for f in feedbacks
     ]
+
+
+@app.post("/feedbacks")
+def create_feedback(feedback: FeedbackCreate, db: Session = Depends(get_db)):
+    # בדיקה אם המשתמש באמת רשום לסיור
+    registration = db.query(TourRegistration).filter_by(
+        tour_id=feedback.tour_id,
+        user_id=feedback.user_id
+    ).first()
+
+    if not registration:
+        raise HTTPException(status_code=403, detail="משתמש לא רשום לסיור זה")
+
+    new_feedback = Feedback(
+    tour_id=feedback.tour_id,
+    user_id=feedback.user_id,
+    content=feedback.content or "",  # ← מונע null
+    rating=feedback.rating
+)
+    db.add(new_feedback)
+    db.commit()
+    db.refresh(new_feedback)
+    return {"message": "פידבק נשלח בהצלחה!"}
