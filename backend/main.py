@@ -25,7 +25,7 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -147,6 +147,47 @@ class FeedbackCreate(BaseModel):
     user_id: int
     content: Optional[str] = None  # ← הפך לאופציונלי
     rating: Optional[float] = None
+    
+    
+    
+class Creature(BaseModel):
+    id: int
+    name: str
+    description: str
+    image: Optional[str] = None
+    exhibition_id: Optional[int] = None
+
+creatures = [
+    {
+        "id": 1,
+        "name": "חתול מצרי",
+        "description": "חתול קדוש במצרים העתיקה, סימל הגנה ופריון.",
+        "image": "/images/egyptcat.jpg",
+        "exhibition_id": 5
+    },
+    {
+        "id": 2,
+        "name": "תן אנוביס",
+        "description": "אנוביס – אל מצרי קדום בדמות תן, שהיה אחראי על חניטה ועולם המתים.",
+        "image": "/images/tenanobes.jpg",
+        "exhibition_id": 5
+    },
+    {
+        "id": 3,
+        "name": "פרעה והתנין",
+        "description": "תנין הנילוס היה סמל לכוח ושליטה. שימש דימוי מקודש במצרים העתיקה.",
+        "image": "/images/far3a.jpg",
+        "exhibition_id": 5
+    },
+    {
+        "id": 4,
+        "name": "עוף החול",
+        "description": "עוף מיתולוגי שמת בגלי להבות ונולד מחדש מאפרו – סמל לחיים נצחיים.",
+        "image": "/images/aof.jpg",
+        "exhibition_id": 5
+    }
+]
+
 
 
 
@@ -290,6 +331,10 @@ events = [
     }
 ]
 
+
+@app.get("/creatures", response_model=List[Creature])
+def get_creatures():
+    return creatures
 
 # ראוטים
 @app.get("/exhibitions", response_model=List[Exhibition])

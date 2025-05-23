@@ -49,6 +49,8 @@ export default function Navbar() {
               <li><Link to="/favorites" style={linkStyle}>שמורים</Link></li>
               <li><Link to="/visitor/tours" style={linkStyle}>סיורים</Link></li>
               <li><Link to="/my-messages" style={linkStyle}>ההודעות שלי</Link></li>
+              <li><Link to="/creatures" style={linkStyle}>היצורים</Link></li>
+
             </>
           )}
 
