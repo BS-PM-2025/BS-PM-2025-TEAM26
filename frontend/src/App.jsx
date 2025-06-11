@@ -22,6 +22,7 @@ import MyMessagesPage from "./pages/MyMessagePage";
 import CreaturesPage from "./pages/CreaturesPage";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminEditExhibitionPage from "./pages/admin/AdminEditExhibitionPage";
 
 export default function App() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="/creatures" element={<CreaturesPage />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/exhibitions/edit/:id" element={<AdminEditExhibitionPage />} />
           </Routes>
         </div>
 
