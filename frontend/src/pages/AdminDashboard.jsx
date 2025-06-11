@@ -15,10 +15,7 @@ export default function AdminDashboard() {
       }}>
         <Link to="/admin/exhibitions" style={btnStyle}>📋 ניהול תערוכות</Link>
         <Link to="/admin/exhibitions/new" style={btnStyle}>➕ הוספת תערוכה חדשה</Link>
-        {/* בעתיד נוסיף כאן גם:
         <Link to="/admin/users" style={btnStyle}>👥 ניהול משתמשים</Link>
-        <Link to="/admin/reports" style={btnStyle}>📊 דוחות וסטטיסטיקות</Link>
-        */}
       </div>
     </div>
   );
