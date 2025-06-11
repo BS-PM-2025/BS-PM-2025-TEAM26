@@ -9,6 +9,8 @@ from datetime import datetime
 from sqlalchemy import DateTime  # אם לא הוספת
 from datetime import datetime
 from sqlalchemy import Float
+from fastapi import Body
+
 
 Base = declarative_base()
 
@@ -25,14 +27,14 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
 # טבלאות במסד נתונים
 class User(Base):
-    __tablename__ = "users"
+    _tablename_ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
@@ -40,7 +42,7 @@ class User(Base):
     role = Column(String(20), nullable=False, default="visitor")
 
 class Tour(Base):
-    __tablename__ = "tours"
+    _tablename_ = "tours"
     id = Column(Integer, primary_key=True)
     guide_id = Column(Integer, nullable=False)
     name = Column(String, nullable=False)
@@ -49,14 +51,14 @@ class Tour(Base):
     tour_date = Column(String)  # ✅ תאריך סיור
 
 class TourRegistration(Base):
-    __tablename__ = "tour_registrations"
+    _tablename_ = "tour_registrations"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
 
 
 class Message(Base):
-    __tablename__ = "messages"
+    _tablename_ = "messages"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, ForeignKey("tours.id"))
     sender_id = Column(Integer, ForeignKey("users.id"))
@@ -65,7 +67,7 @@ class Message(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)  
 
 class Feedback(Base):
-    __tablename__ = "feedbacks"
+    _tablename_ = "feedbacks"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
@@ -407,7 +409,7 @@ def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get
     if not user:
         print("❌ המשתמש לא נמצא במסד")
     elif user.role != "visitor":
-        print(f"⚠️ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
+        print(f"⚠ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
 
     if not user or user.role != "visitor":
         raise HTTPException(status_code=400, detail="משתמש לא קיים או לא מבקר")
@@ -584,3 +586,63 @@ def create_exhibition(ex: dict):
     exhibitions.append(ex)
     return {"message": f"תערוכה {new_id} נוספה בהצלחה"}
 
+@app.get("/admin/users")
+def get_all_users(db: Session = Depends(get_db)):
+    return db.query(User).all()
+
+@app.delete("/admin/users/{user_id}")
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(id=user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="משתמש לא נמצא")
+    db.delete(user)
+    db.commit()
+    return {"message": f"המשתמש {user.username} נמחק"}
+
+@app.get("/admin/messages")
+def get_all_messages(db: Session = Depends(get_db)):
+    messages = db.query(Message).all()
+    result = []
+    for msg in messages:
+        sender = db.query(User).filter(User.id == msg.sender_id).first()
+        receiver = db.query(User).filter(User.id == msg.recipient_id).first()
+
+        print("📤 הודעה:", {
+            "id": msg.id,
+            "content": msg.content,
+            "created_at": msg.timestamp,
+            "sender": sender.username if sender else "לא ידוע",
+            "receiver": receiver.username if receiver else "לא ידוע",
+        })  # ✅ זה מה שחשוב!
+
+        result.append({
+            "id": msg.id,
+            "content": msg.content,
+            "created_at": msg.timestamp,
+            "sender": sender.username if sender else "לא ידוע",
+            "receiver": receiver.username if receiver else "לא ידוע",
+        })
+    return result
+
+
+
+@app.post("/admin/messages/send")
+def send_message_as_admin(
+    sender_id: int = Body(...),
+    recipient_id: int = Body(...),
+    content: str = Body(...),
+    db: Session = Depends(get_db),
+):
+    new_msg = Message(
+        sender_id=sender_id,
+        recipient_id=recipient_id,
+        content=content,
+    )
+    db.add(new_msg)
+    db.commit()
+    db.refresh(new_msg)
+    return {"message": "ההודעה נשלחה בהצלחה", "id": new_msg.id}
+
+@app.get("/users")
+def get_users(db: Session = Depends(get_db)):
+    return db.query(User).all()

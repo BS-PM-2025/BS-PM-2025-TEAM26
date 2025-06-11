@@ -16,6 +16,8 @@ export default function AdminDashboard() {
         <Link to="/admin/exhibitions" style={btnStyle}>📋 ניהול תערוכות</Link>
         <Link to="/admin/exhibitions/new" style={btnStyle}>➕ הוספת תערוכה חדשה</Link>
         <Link to="/admin/users" style={btnStyle}>👥 ניהול משתמשים</Link>
+        <Link to="/admin/messages" style={btnStyle}>📬 ניהול הודעות</Link>
+
       </div>
     </div>
   );
