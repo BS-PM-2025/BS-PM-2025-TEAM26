@@ -344,10 +344,6 @@ events = [
 ]
 
 
-@app.get("/creatures", response_model=List[Creature])
-def get_creatures():
-    return creatures
-
 # ראוטים
 @app.get("/exhibitions", response_model=List[Exhibition])
 def get_exhibitions():
@@ -692,3 +688,31 @@ def delete_event(event_id: int):
             events = [ev for ev in events if ev["id"] != event_id]
             return {"message": f"האירוע {event_id} נמחק בהצלחה"}
     raise HTTPException(status_code=404, detail="אירוע לא נמצא")
+
+@app.get("/creatures", response_model=List[Creature])
+def get_creatures():
+    return creatures
+
+@app.post("/admin/creatures")
+def create_creature(creature: Creature):
+    new_id = max(c["id"] for c in creatures) + 1 if creatures else 1
+    creature.id = new_id
+    creatures.append(creature.dict())
+    return {"message": f"יצור {new_id} נוסף בהצלחה"}
+
+@app.put("/admin/creatures/{creature_id}")
+def update_creature(creature_id: int, updated: Creature):
+    for c in creatures:
+        if c["id"] == creature_id:
+            c.update(updated.dict())
+            return {"message": "היצור עודכן"}
+    raise HTTPException(status_code=404, detail="יצור לא נמצא")
+
+@app.delete("/admin/creatures/{creature_id}")
+def delete_creature(creature_id: int):
+    global creatures
+    for c in creatures:
+        if c["id"] == creature_id:
+            creatures = [cr for cr in creatures if cr["id"] != creature_id]
+            return {"message": f"יצור {creature_id} נמחק"}
+    raise HTTPException(status_code=404, detail="יצור לא נמצא")

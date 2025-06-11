@@ -18,6 +18,8 @@ export default function AdminDashboard() {
         <Link to="/admin/users" style={btnStyle}>👥 ניהול משתמשים</Link>
         <Link to="/admin/messages" style={btnStyle}>📬 ניהול הודעות</Link>
         <Link to="/admin/events" style={btnStyle}>🗓 ניהול אירועים</Link>
+        <Link to="/admin/creatures" style={btnStyle}>🦎 ניהול יצורים</Link>
+
 
       </div>
     </div>

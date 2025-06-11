@@ -65,6 +65,8 @@ export default function App() {
             <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/admin/messages" element={<AdminSendMessagePage />} />
             <Route path="/admin/events" element={<AdminEventsPage />} />
+            <Route path="/admin/creatures" element={<AdminCreaturesPage />} />
+
 
           </Routes>
         </div>
