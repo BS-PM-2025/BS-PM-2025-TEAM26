@@ -25,7 +25,7 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -558,3 +558,29 @@ def admin_login(data: AdminLoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=403, detail="גישה אסורה – אינך מנהל")
 
     return {"message": "התחברת בהצלחה"}
+
+@app.delete("/admin/exhibitions/{ex_id}")
+def delete_exhibition(ex_id: int):
+    global exhibitions
+    for ex in exhibitions:
+        if ex["id"] == ex_id:
+            exhibitions = [e for e in exhibitions if e["id"] != ex_id]
+            return {"message": f"תערוכה {ex_id} נמחקה בהצלחה"}
+    raise HTTPException(status_code=404, detail="תערוכה לא נמצאה")
+
+@app.put("/admin/exhibitions/{ex_id}")
+def update_exhibition(ex_id: int, updated: dict):
+    for ex in exhibitions:
+        if ex["id"] == ex_id:
+            ex.update(updated)
+            return {"message": "התערוכה עודכנה"}
+    raise HTTPException(status_code=404, detail="תערוכה לא נמצאה")
+
+
+@app.post("/admin/exhibitions")
+def create_exhibition(ex: dict):
+    new_id = max(e["id"] for e in exhibitions) + 1
+    ex["id"] = new_id
+    exhibitions.append(ex)
+    return {"message": f"תערוכה {new_id} נוספה בהצלחה"}
+

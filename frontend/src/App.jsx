@@ -22,8 +22,10 @@ import MyMessagesPage from "./pages/MyMessagePage";
 import CreaturesPage from "./pages/CreaturesPage";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
-import AdminEditExhibitionPage from "./pages/admin/AdminEditExhibitionPage";
 import AdminExhibitionsPage from "./pages/admin/AdminExhibitionsPage";
+import AdminEditExhibitionPage from "./pages/admin/AdminEditExhibitionPage";
+import AdminNewExhibitionPage from "./pages/admin/AdminNewExhibitionPage";
+
 
 export default function App() {
   return (
@@ -54,8 +56,9 @@ export default function App() {
             <Route path="/creatures" element={<CreaturesPage />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/exhibitions/edit/:id" element={<AdminEditExhibitionPage />} />
             <Route path="/admin/exhibitions" element={<AdminExhibitionsPage />} />
+            <Route path="/admin/exhibitions/edit/:id" element={<AdminEditExhibitionPage />} />
+            <Route path="/admin/exhibitions/new" element={<AdminNewExhibitionPage />} />
           </Routes>
         </div>
 
