@@ -34,7 +34,7 @@ SessionLocal = sessionmaker(bind=engine)
 
 # טבלאות במסד נתונים
 class User(Base):
-    __tablename__ = "users"
+    _tablename_ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
@@ -42,7 +42,7 @@ class User(Base):
     role = Column(String(20), nullable=False, default="visitor")
 
 class Tour(Base):
-    __tablename__ = "tours"
+    _tablename_ = "tours"
     id = Column(Integer, primary_key=True)
     guide_id = Column(Integer, nullable=False)
     name = Column(String, nullable=False)
@@ -51,14 +51,14 @@ class Tour(Base):
     tour_date = Column(String)  # ✅ תאריך סיור
 
 class TourRegistration(Base):
-    __tablename__ = "tour_registrations"
+    _tablename_ = "tour_registrations"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
 
 
 class Message(Base):
-    __tablename__ = "messages"
+    _tablename_ = "messages"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, ForeignKey("tours.id"))
     sender_id = Column(Integer, ForeignKey("users.id"))
@@ -67,7 +67,7 @@ class Message(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)  
 
 class Feedback(Base):
-    __tablename__ = "feedbacks"
+    _tablename_ = "feedbacks"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
@@ -414,7 +414,7 @@ def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get
     if not user:
         print("❌ המשתמש לא נמצא במסד")
     elif user.role != "visitor":
-        print(f"⚠️ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
+        print(f"⚠ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
 
     if not user or user.role != "visitor":
         raise HTTPException(status_code=400, detail="משתמש לא קיים או לא מבקר")
@@ -662,3 +662,33 @@ def update_user_role(user_id: int, data: RoleUpdateRequest, db: Session = Depend
     user.role = data.role
     db.commit()
     return {"message": f"התפקיד של המשתמש {user.username} עודכן ל-{data.role}"}
+
+@app.get("/admin/events")
+def get_all_events():
+    return events
+
+
+@app.post("/admin/events")
+def add_event(event: dict):
+    new_id = max(e["id"] for e in events) + 1 if events else 1
+    event["id"] = new_id
+    events.append(event)
+    return {"message": f"האירוע {new_id} נוסף בהצלחה"}
+
+@app.put("/admin/events/{event_id}")
+def update_event(event_id: int, updated: dict):
+    for event in events:
+        if event["id"] == event_id:
+            event.update(updated)
+            return {"message": "האירוע עודכן בהצלחה"}
+    raise HTTPException(status_code=404, detail="אירוע לא נמצא")
+
+
+@app.delete("/admin/events/{event_id}")
+def delete_event(event_id: int):
+    global events
+    for e in events:
+        if e["id"] == event_id:
+            events = [ev for ev in events if ev["id"] != event_id]
+            return {"message": f"האירוע {event_id} נמחק בהצלחה"}
+    raise HTTPException(status_code=404, detail="אירוע לא נמצא")

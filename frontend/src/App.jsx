@@ -27,6 +27,7 @@ import AdminEditExhibitionPage from "./pages/admin/AdminEditExhibitionPage";
 import AdminNewExhibitionPage from "./pages/admin/AdminNewExhibitionPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminSendMessagePage from "./pages/admin/AdminSendMessagePage";
+import AdminEventsPage from "./pages/admin/AdminEventsPage";
 
 
 export default function App() {
@@ -63,7 +64,7 @@ export default function App() {
             <Route path="/admin/exhibitions/new" element={<AdminNewExhibitionPage />} />
             <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/admin/messages" element={<AdminSendMessagePage />} />
-            
+            <Route path="/admin/events" element={<AdminEventsPage />} />
 
           </Routes>
         </div>
