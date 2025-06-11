@@ -27,14 +27,14 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
 # טבלאות במסד נתונים
 class User(Base):
-    _tablename_ = "users"
+    __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False)
@@ -42,7 +42,7 @@ class User(Base):
     role = Column(String(20), nullable=False, default="visitor")
 
 class Tour(Base):
-    _tablename_ = "tours"
+    __tablename__ = "tours"
     id = Column(Integer, primary_key=True)
     guide_id = Column(Integer, nullable=False)
     name = Column(String, nullable=False)
@@ -51,14 +51,14 @@ class Tour(Base):
     tour_date = Column(String)  # ✅ תאריך סיור
 
 class TourRegistration(Base):
-    _tablename_ = "tour_registrations"
+    __tablename__ = "tour_registrations"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
 
 
 class Message(Base):
-    _tablename_ = "messages"
+    __tablename__ = "messages"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, ForeignKey("tours.id"))
     sender_id = Column(Integer, ForeignKey("users.id"))
@@ -67,7 +67,7 @@ class Message(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)  
 
 class Feedback(Base):
-    _tablename_ = "feedbacks"
+    __tablename__ = "feedbacks"
     id = Column(Integer, primary_key=True)
     tour_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
@@ -163,6 +163,11 @@ class Creature(BaseModel):
 class AdminLoginRequest(BaseModel):
     email: str
     password: str    
+
+
+class RoleUpdateRequest(BaseModel):
+    role: str
+
 
 creatures = [
     {
@@ -409,7 +414,7 @@ def register_to_tour(tour_id: int, visitor_email: str, db: Session = Depends(get
     if not user:
         print("❌ המשתמש לא נמצא במסד")
     elif user.role != "visitor":
-        print(f"⚠ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
+        print(f"⚠️ המשתמש נמצא אבל התפקיד שלו הוא {user.role}, לא visitor")
 
     if not user or user.role != "visitor":
         raise HTTPException(status_code=400, detail="משתמש לא קיים או לא מבקר")
@@ -646,3 +651,14 @@ def send_message_as_admin(
 @app.get("/users")
 def get_users(db: Session = Depends(get_db)):
     return db.query(User).all()
+
+
+@app.put("/admin/users/{user_id}/role")
+def update_user_role(user_id: int, data: RoleUpdateRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(id=user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="משתמש לא נמצא")
+
+    user.role = data.role
+    db.commit()
+    return {"message": f"התפקיד של המשתמש {user.username} עודכן ל-{data.role}"}

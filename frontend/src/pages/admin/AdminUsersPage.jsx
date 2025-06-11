@@ -2,93 +2,110 @@ import React, { useEffect, useState } from "react";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
-  const [filtered, setFiltered] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:8000/admin/users")
+    fetch("http://localhost:8000/users")
       .then(res => res.json())
       .then(data => {
-        setUsers(data);
-        setFiltered(data);
+        if (Array.isArray(data)) {
+          setUsers(data);
+        } else {
+          console.error("פורמט נתונים לא תקין", data);
+        }
       })
-      .catch(() => setError("שגיאה בטעינת המשתמשים"));
+      .catch(err => console.error("שגיאה בטעינת משתמשים:", err));
   }, []);
 
-  useEffect(() => {
-    const lowerSearch = searchTerm.toLowerCase();
-    const results = users.filter(u =>
-      u.username.toLowerCase().includes(lowerSearch) ||
-      u.email.toLowerCase().includes(lowerSearch)
-    );
-    setFiltered(results);
-  }, [searchTerm, users]);
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      const res = await fetch(`http://localhost:8000/admin/users/${userId}/role`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("האם אתה בטוח שברצונך למחוק משתמש זה?")) return;
+      const data = await res.json();
+      setStatus(data.message);
+      setUsers(prev => prev.map(u => (u.id === userId ? { ...u, role: newRole } : u)));
+    } catch (err) {
+      console.error("שגיאה בעדכון תפקיד:", err);
+      setStatus("שגיאה בעדכון תפקיד");
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("האם אתה בטוח שברצונך למחוק את המשתמש?")) return;
 
     try {
-      const res = await fetch(`http://localhost:8000/admin/users/${id}`, {
+      const res = await fetch(`http://localhost:8000/admin/users/${userId}`, {
         method: "DELETE",
       });
+
       const data = await res.json();
-      alert(data.message);
-      const updated = users.filter((u) => u.id !== id);
-      setUsers(updated);
-      setFiltered(updated);
-    } catch {
-      alert("שגיאה במחיקה");
+      setStatus(data.message);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+    } catch (err) {
+      console.error("שגיאה במחיקת משתמש:", err);
+      setStatus("שגיאה במחיקה");
     }
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2>👥 ניהול משתמשים</h2>
+    <div style={{ padding: "2rem", maxWidth: "1000px", margin: "auto" }}>
+      <h2>🔧 ניהול משתמשים</h2>
 
-      <input
-        type="text"
-        placeholder="חפש לפי שם או מייל"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        style={{
-          width: "100%",
-          padding: "0.5rem",
-          marginBottom: "1.5rem",
-          borderRadius: "6px",
-          border: "1px solid #ccc"
-        }}
-      />
+      {users.length === 0 ? (
+        <p>לא נמצאו משתמשים</p>
+      ) : (
+        <table style={{ width: "100%", borderCollapse: "collapse", direction: "rtl", marginTop: "1rem" }}>
+          <thead>
+            <tr style={{ backgroundColor: "#0d6efd", color: "white" }}>
+              <th style={{ padding: "0.5rem", border: "1px solid #ddd" }}>שם משתמש</th>
+              <th style={{ padding: "0.5rem", border: "1px solid #ddd" }}>אימייל</th>
+              <th style={{ padding: "0.5rem", border: "1px solid #ddd" }}>תפקיד</th>
+              <th style={{ padding: "0.5rem", border: "1px solid #ddd" }}>שינוי תפקיד</th>
+              <th style={{ padding: "0.5rem", border: "1px solid #ddd" }}>🗑️ מחיקה</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(user => (
+              <tr key={user.id} style={{ backgroundColor: "#f8f9fa" }}>
+                <td style={{ padding: "0.5rem", border: "1px solid #ddd" }}>{user.username}</td>
+                <td style={{ padding: "0.5rem", border: "1px solid #ddd" }}>{user.email}</td>
+                <td style={{ padding: "0.5rem", border: "1px solid #ddd" }}>{user.role}</td>
+                <td style={{ padding: "0.5rem", border: "1px solid #ddd" }}>
+                  <select
+                    value={user.role}
+                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                  >
+                    <option value="visitor">Visitor</option>
+                    <option value="guide">Guide</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </td>
+                <td style={{ padding: "0.5rem", border: "1px solid #ddd", textAlign: "center" }}>
+                  <button
+                    onClick={() => handleDeleteUser(user.id)}
+                    style={{
+                      backgroundColor: "red",
+                      color: "white",
+                      border: "none",
+                      padding: "0.5rem 1rem",
+                      borderRadius: "5px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    מחק
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {filtered.map((u) => (
-          <li key={u.id} style={{
-            border: "1px solid #ccc",
-            padding: "1rem",
-            marginBottom: "1rem",
-            borderRadius: "10px",
-            background: "#f9f9f9"
-          }}>
-            <p><strong>שם:</strong> {u.username}</p>
-            <p><strong>אימייל:</strong> {u.email}</p>
-            <p><strong>תפקיד:</strong> {u.role}</p>
-            <button
-              onClick={() => handleDelete(u.id)}
-              style={{
-                background: "red",
-                color: "white",
-                padding: "0.4rem 1rem",
-                borderRadius: "6px",
-                border: "none",
-                cursor: "pointer"
-              }}
-            >
-              🗑️ מחק
-            </button>
-          </li>
-        ))}
-      </ul>
+      {status && <p style={{ color: "green", marginTop: "1rem" }}>{status}</p>}
     </div>
   );
 }
