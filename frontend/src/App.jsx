@@ -20,7 +20,8 @@ import ManageToursPage from "./pages/guide/ManageToursPage";
 import EditTourPage from "./pages/guide/EditTourPage";
 import MyMessagesPage from "./pages/MyMessagePage";
 import CreaturesPage from "./pages/CreaturesPage";
-
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 
 export default function App() {
   return (
@@ -49,6 +50,8 @@ export default function App() {
             <Route path="/guide/tour-participants" element={<TourParticipantsPage />} />
             <Route path="/my-messages" element={<MyMessagesPage />} />
             <Route path="/creatures" element={<CreaturesPage />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Routes>
         </div>
 

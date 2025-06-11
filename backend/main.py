@@ -25,7 +25,7 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -156,6 +156,11 @@ class Creature(BaseModel):
     description: str
     image: Optional[str] = None
     exhibition_id: Optional[int] = None
+
+
+class AdminLoginRequest(BaseModel):
+    email: str
+    password: str    
 
 creatures = [
     {
@@ -543,3 +548,13 @@ def create_feedback(feedback: FeedbackCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_feedback)
     return {"message": "פידבק נשלח בהצלחה!"}
+
+@app.post("/admin/login")
+def admin_login(data: AdminLoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(email=data.email, password=data.password).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="פרטי התחברות שגויים")
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="גישה אסורה – אינך מנהל")
+
+    return {"message": "התחברת בהצלחה"}

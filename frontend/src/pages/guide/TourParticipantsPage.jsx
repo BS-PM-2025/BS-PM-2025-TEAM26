@@ -142,8 +142,13 @@ export default function TourParticipantsPage() {
                             marginBottom: "0.5rem",
                             backgroundColor: "#f4f4f4"
                           }}>
-                            <p><strong>{fb.visitor_name}</strong> ({new Date(fb.timestamp).toLocaleString()})</p>
-                            <p>{fb.content}</p>
+                            <p><strong>{fb.user}</strong></p>
+                            {fb.rating && (
+                              <div style={{ fontSize: "1.3rem", color: "#ffc107" }}>
+                                {"★".repeat(fb.rating)}{"☆".repeat(5 - fb.rating)}
+                              </div>
+                            )}
+                            {fb.content && <p>{fb.content}</p>}
                           </li>
                         ))}
                       </ul>

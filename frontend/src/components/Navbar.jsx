@@ -50,12 +50,15 @@ export default function Navbar() {
               <li><Link to="/visitor/tours" style={linkStyle}>סיורים</Link></li>
               <li><Link to="/my-messages" style={linkStyle}>ההודעות שלי</Link></li>
               <li><Link to="/creatures" style={linkStyle}>היצורים</Link></li>
-
             </>
           )}
 
           {role === "guide" && (
             <li><Link to="/guide-dashboard" style={linkStyle}>לוח מדריך</Link></li>
+          )}
+
+          {role === "admin" && (
+            <li><Link to="/admin/dashboard" style={linkStyle}>ניהול</Link></li>
           )}
 
           {!loggedInUser ? (
@@ -65,8 +68,8 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <li style={{ color: "yellow", fontWeight: "bold" }}>
-                שלום, {loggedInUser.username}
+              <li style={{ color: role === "admin" ? "orange" : "yellow", fontWeight: "bold" }}>
+                שלום, {loggedInUser.username} {role === "admin" && "(מנהל)"}
               </li>
               <li>
                 <button onClick={handleLogout} style={logoutButtonStyle}>

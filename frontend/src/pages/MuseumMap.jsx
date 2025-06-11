@@ -93,7 +93,7 @@ const MuseumMap = () => {
       >
         <LayersControl position="topright">
           <LayersControl.BaseLayer checked name="מפת המוזיאון">
-            <ImageOverlay url="/images/museum_layout_leaflet.png" bounds={bounds} />
+            <ImageOverlay url="/images/museum.jpg" bounds={bounds} />
           </LayersControl.BaseLayer>
 
           <LayersControl.Overlay name="תערוכות">

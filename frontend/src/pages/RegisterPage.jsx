@@ -38,11 +38,13 @@ export default function RegisterPage() {
       alert(data.message);
 
       // ניתוב לפי סוג משתמש
-      if (finalFormData.role === "guide") {
-        navigate("/guide-dashboard");
-      } else {
-        navigate("/");
-      }
+    if (finalFormData.role === "admin") {
+     navigate("/admin/dashboard");
+    } else if (finalFormData.role === "guide") {
+     navigate("/guide-dashboard");
+    } else {
+     navigate("/");
+    }
 
       // איפוס הטופס
       setFormData({ username: "", email: "", password: "", role: "" });
