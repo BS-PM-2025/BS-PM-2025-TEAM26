@@ -19,6 +19,7 @@ import TourParticipantsPage from "./pages/guide/TourParticipantsPage";
 import ManageToursPage from "./pages/guide/ManageToursPage";
 import EditTourPage from "./pages/guide/EditTourPage";
 import MyMessagesPage from "./pages/MyMessagePage";
+import CreaturesPage from "./pages/CreaturesPage";
 
 
 export default function App() {
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="/guide/edit-tour/:id" element={<EditTourPage />} />
             <Route path="/guide/tour-participants" element={<TourParticipantsPage />} />
             <Route path="/my-messages" element={<MyMessagesPage />} />
+            <Route path="/creatures" element={<CreaturesPage />} />
           </Routes>
         </div>
 
@@ -55,4 +57,3 @@ export default function App() {
     </Router>
   );
 }
-

@@ -8,6 +8,7 @@ from sqlalchemy import Text, ForeignKey, DateTime
 from datetime import datetime
 from sqlalchemy import DateTime  # אם לא הוספת
 from datetime import datetime
+from sqlalchemy import Float
 
 Base = declarative_base()
 
@@ -24,7 +25,7 @@ app.add_middleware(
 )
 
 # חיבור למסד PostgreSQL
-DATABASE_URL = "postgresql://postgres:abed@localhost/postgres"
+DATABASE_URL = "postgresql://postgres:yosef@localhost/postgres"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -61,14 +62,16 @@ class Message(Base):
     sender_id = Column(Integer, ForeignKey("users.id"))
     recipient_id = Column(Integer, ForeignKey("users.id"))
     content = Column(Text, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)    
+    timestamp = Column(DateTime, default=datetime.utcnow)  
 
 class Feedback(Base):
     __tablename__ = "feedbacks"
     id = Column(Integer, primary_key=True)
-    tour_id = Column(Integer, ForeignKey("tours.id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
-    content = Column(Text, nullable=False)
+    tour_id = Column(Integer, nullable=False)
+    user_id = Column(Integer, nullable=False)
+    content = Column(Text, nullable=True) 
+    rating = Column(Float, nullable=True)
+ 
 
 
 # יצירת טבלאות במסד אם לא קיימות
@@ -138,6 +141,54 @@ class FeedbackRequest(BaseModel):
     tour_id: int
     user_id: int
     content: str
+
+class FeedbackCreate(BaseModel):
+    tour_id: int
+    user_id: int
+    content: Optional[str] = None  # ← הפך לאופציונלי
+    rating: Optional[float] = None
+    
+    
+    
+class Creature(BaseModel):
+    id: int
+    name: str
+    description: str
+    image: Optional[str] = None
+    exhibition_id: Optional[int] = None
+
+creatures = [
+    {
+        "id": 1,
+        "name": "חתול מצרי",
+        "description": "חתול קדוש במצרים העתיקה, סימל הגנה ופריון.",
+        "image": "/images/egyptcat.jpg",
+        "exhibition_id": 5
+    },
+    {
+        "id": 2,
+        "name": "תן אנוביס",
+        "description": "אנוביס – אל מצרי קדום בדמות תן, שהיה אחראי על חניטה ועולם המתים.",
+        "image": "/images/tenanobes.jpg",
+        "exhibition_id": 5
+    },
+    {
+        "id": 3,
+        "name": "פרעה והתנין",
+        "description": "תנין הנילוס היה סמל לכוח ושליטה. שימש דימוי מקודש במצרים העתיקה.",
+        "image": "/images/far3a.jpg",
+        "exhibition_id": 5
+    },
+    {
+        "id": 4,
+        "name": "עוף החול",
+        "description": "עוף מיתולוגי שמת בגלי להבות ונולד מחדש מאפרו – סמל לחיים נצחיים.",
+        "image": "/images/aof.jpg",
+        "exhibition_id": 5
+    }
+]
+
+
 
 
 # דאטה זמני
@@ -261,22 +312,29 @@ events = [
         "id": 1,
         "title": "פתיחת תערוכת 'חלומות צלולים'",
         "date": "2025-01-01",
-        "description": "אירוע פתיחה חגיגי."
+        "description": "אירוע פתיחה חגיגי.",
+          "image": "/images/fe-dreams.jpg"
     },
     {
         "id": 2,
         "title": "סדנת הדפס לילדים",
         "date": "2025-01-15",
-        "description": "סדנת יצירה חווייתית."
+        "description": "סדנת יצירה חווייתית.",
+        "image": "/images/fe-print.jpg"
     },
     {
         "id": 3,
         "title": "סיור מודרך בתערוכת 'שדה'",
         "date": "2025-02-10",
-        "description": "סיור עם האוצרות בעקבות 'שדה'."
+        "description": "סיור עם האוצרות בעקבות 'שדה'.",
+        "image": "/images/fe-october7-event.jpg"
     }
 ]
 
+
+@app.get("/creatures", response_model=List[Creature])
+def get_creatures():
+    return creatures
 
 # ראוטים
 @app.get("/exhibitions", response_model=List[Exhibition])
@@ -448,12 +506,6 @@ def get_messages(user_id: int, db: Session = Depends(get_db)):
         for m in messages
     ]
 
-@app.post("/feedbacks")
-def submit_feedback(feedback: FeedbackRequest, db: Session = Depends(get_db)):
-    new_feedback = Feedback(**feedback.dict())
-    db.add(new_feedback)
-    db.commit()
-    return {"message": "הפידבק נשלח בהצלחה"}
 
 @app.get("/tours/{tour_id}/feedbacks")
 def get_feedbacks(tour_id: int, db: Session = Depends(get_db)):
@@ -463,7 +515,31 @@ def get_feedbacks(tour_id: int, db: Session = Depends(get_db)):
     return [
         {
             "user": user_map.get(f.user_id, "לא ידוע"),
-            "content": f.content
+            "content": f.content,
+             "rating": f.rating
         }
         for f in feedbacks
     ]
+
+
+@app.post("/feedbacks")
+def create_feedback(feedback: FeedbackCreate, db: Session = Depends(get_db)):
+    # בדיקה אם המשתמש באמת רשום לסיור
+    registration = db.query(TourRegistration).filter_by(
+        tour_id=feedback.tour_id,
+        user_id=feedback.user_id
+    ).first()
+
+    if not registration:
+        raise HTTPException(status_code=403, detail="משתמש לא רשום לסיור זה")
+
+    new_feedback = Feedback(
+    tour_id=feedback.tour_id,
+    user_id=feedback.user_id,
+    content=feedback.content or "",  # ← מונע null
+    rating=feedback.rating
+)
+    db.add(new_feedback)
+    db.commit()
+    db.refresh(new_feedback)
+    return {"message": "פידבק נשלח בהצלחה!"}
